@@ -3,57 +3,62 @@ import { test, expect } from '@playwright/test';
 test.describe('CSV/Excel Converter', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/en');
+    await page.waitForLoadState('networkidle');
   });
 
   test('should show home page with upload dropzone', async ({ page }) => {
     await page.screenshot({ path: 'screenshots/01-home-en.png', fullPage: true });
-    await expect(page.locator('[data-testid="upload-dropzone"]')).toBeVisible();
+    await expect(page.locator('[data-testid="upload-dropzone"]')).toBeVisible({ timeout: 10000 });
   });
 
   test('should paste CSV data and show preview', async ({ page }) => {
     const csvData = 'name,age,city\nJohn,30,NYC\nJane,25,LA';
 
     // Find and fill the paste input
-    await page.fill('[data-testid="paste-input"]', csvData);
+    const pasteInput = page.locator('[data-testid="paste-input"]');
+    await expect(pasteInput).toBeVisible({ timeout: 10000 });
+    await pasteInput.fill(csvData);
     await page.screenshot({ path: 'screenshots/02-csv-pasted.png' });
 
-    // Click paste button
-    await page.getByRole('button', { name: 'Paste' }).click();
+    // Click paste button - use text that matches the translation
+    await page.locator('button:has-text("Paste")').click();
 
     // Wait for preview
-    await page.waitForSelector('[data-testid="data-preview"]');
+    await page.waitForSelector('[data-testid="data-preview"]', { timeout: 10000 });
     await page.screenshot({ path: 'screenshots/03-preview.png' });
 
     // Verify data is shown
     await expect(page.locator('[data-testid="data-preview"]')).toContainText('John');
   });
 
-  test('should select output format', async ({ page }) => {
-    // First load sample data
-    await page.getByRole('button', { name: 'Load Sample' }).click();
-    await page.waitForSelector('[data-testid="data-preview"]');
+  test('should load sample data and show preview', async ({ page }) => {
+    // Click Load Sample button
+    await page.locator('button:has-text("Load Sample")').click();
 
-    // Select JSON output
-    await page.click('[data-testid="output-format"]');
-    await page.getByRole('option', { name: 'JSON' }).click();
+    // Wait for data preview to appear with data
+    await page.waitForSelector('[data-testid="data-preview"] table', { timeout: 10000 });
+    await page.screenshot({ path: 'screenshots/04-sample-loaded.png' });
 
-    await page.screenshot({ path: 'screenshots/04-format-selected.png' });
+    // Verify sample data is shown
+    await expect(page.locator('[data-testid="data-preview"]')).toContainText('John Doe');
   });
 
   test('should convert CSV to JSON', async ({ page }) => {
     // Load sample data
-    await page.getByRole('button', { name: 'Load Sample' }).click();
-    await page.waitForSelector('[data-testid="data-preview"]');
+    await page.locator('button:has-text("Load Sample")').click();
+    await page.waitForSelector('[data-testid="data-preview"] table', { timeout: 10000 });
 
-    // Select JSON output
-    await page.click('[data-testid="output-format"]');
-    await page.getByRole('option', { name: 'JSON' }).click();
+    // Select JSON output using the format selector
+    const formatSelector = page.locator('[data-testid="output-format"]');
+    await expect(formatSelector).toBeVisible({ timeout: 10000 });
+    await formatSelector.click();
+    await page.locator('[role="option"]:has-text("JSON")').click();
 
     // Convert
-    await page.click('[data-testid="convert-btn"]');
+    await page.locator('[data-testid="convert-btn"]').click();
 
     // Wait for result
-    await page.waitForSelector('[data-testid="convert-result"]');
+    await page.waitForSelector('[data-testid="convert-result"]', { timeout: 10000 });
     await page.screenshot({ path: 'screenshots/05-result.png' });
 
     // Verify result contains JSON
@@ -61,12 +66,14 @@ test.describe('CSV/Excel Converter', () => {
   });
 
   test('should toggle options panel', async ({ page }) => {
-    // Load sample data
-    await page.getByRole('button', { name: 'Load Sample' }).click();
-    await page.waitForSelector('[data-testid="data-preview"]');
+    // Load sample data first
+    await page.locator('button:has-text("Load Sample")').click();
+    await page.waitForSelector('[data-testid="data-preview"] table', { timeout: 10000 });
 
     // Toggle options
-    await page.click('[data-testid="options-toggle"]');
+    const optionsToggle = page.locator('[data-testid="options-toggle"]');
+    await expect(optionsToggle).toBeVisible({ timeout: 10000 });
+    await optionsToggle.click();
     await page.screenshot({ path: 'screenshots/06-options.png' });
   });
 });
@@ -74,42 +81,48 @@ test.describe('CSV/Excel Converter', () => {
 test.describe('Pages Navigation', () => {
   test('should show batch page', async ({ page }) => {
     await page.goto('/en/batch');
+    await page.waitForLoadState('networkidle');
     await page.screenshot({ path: 'screenshots/07-batch.png', fullPage: true });
-    await expect(page.getByRole('heading', { name: 'Batch Conversion' })).toBeVisible();
+    await expect(page.locator('h1:has-text("Batch Conversion")')).toBeVisible({ timeout: 10000 });
   });
 
   test('should show transform page', async ({ page }) => {
     await page.goto('/en/transform');
+    await page.waitForLoadState('networkidle');
     await page.screenshot({ path: 'screenshots/08-transform.png', fullPage: true });
-    await expect(page.getByRole('heading', { name: 'Transform Data' })).toBeVisible();
+    await expect(page.locator('h1:has-text("Transform Data")')).toBeVisible({ timeout: 10000 });
   });
 
   test('should show API docs page', async ({ page }) => {
     await page.goto('/en/api-docs');
+    await page.waitForLoadState('networkidle');
     await page.screenshot({ path: 'screenshots/09-api-docs.png', fullPage: true });
-    await expect(page.getByRole('heading', { name: 'API Documentation' })).toBeVisible();
+    await expect(page.locator('h1:has-text("API Documentation")')).toBeVisible({ timeout: 10000 });
   });
 
   test('should show history page', async ({ page }) => {
     await page.goto('/en/history');
+    await page.waitForLoadState('networkidle');
     await page.screenshot({ path: 'screenshots/10-history.png', fullPage: true });
-    await expect(page.getByRole('heading', { name: 'Conversion History' })).toBeVisible();
+    await expect(page.locator('h1:has-text("Conversion History")')).toBeVisible({ timeout: 10000 });
   });
 });
 
 test.describe('Internationalization', () => {
   test('Arabic page with RTL', async ({ page }) => {
     await page.goto('/ar');
+    await page.waitForLoadState('networkidle');
 
     const html = page.locator('html');
-    await expect(html).toHaveAttribute('dir', 'rtl');
-    await expect(html).toHaveAttribute('lang', 'ar');
+    await expect(html).toHaveAttribute('dir', 'rtl', { timeout: 10000 });
+    await expect(html).toHaveAttribute('lang', 'ar', { timeout: 10000 });
 
     await page.screenshot({ path: 'screenshots/11-home-ar.png', fullPage: true });
   });
 
   test('Arabic API docs', async ({ page }) => {
     await page.goto('/ar/api-docs');
+    await page.waitForLoadState('networkidle');
     await page.screenshot({ path: 'screenshots/12-api-docs-ar.png', fullPage: true });
   });
 });
@@ -118,18 +131,21 @@ test.describe('Responsive Design', () => {
   test('Mobile layout', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('/en');
+    await page.waitForLoadState('networkidle');
     await page.screenshot({ path: 'screenshots/13-mobile.png', fullPage: true });
   });
 
   test('Tablet layout', async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto('/en');
+    await page.waitForLoadState('networkidle');
     await page.screenshot({ path: 'screenshots/14-tablet.png', fullPage: true });
   });
 
   test('Desktop layout', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 720 });
     await page.goto('/en');
+    await page.waitForLoadState('networkidle');
     await page.screenshot({ path: 'screenshots/15-desktop.png', fullPage: true });
   });
 });

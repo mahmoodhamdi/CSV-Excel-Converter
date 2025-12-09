@@ -40,11 +40,9 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run E2E tests
-        run: |
-          npm run start &
-          sleep 10
-          npm run test:e2e
-          pkill -f "next start" || true
+        run: npm run test:e2e
+        env:
+          CI: true
 
       - name: Upload screenshots
         uses: actions/upload-artifact@v4
