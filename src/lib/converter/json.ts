@@ -1,12 +1,42 @@
 import type { ParsedData, JsonOptions } from '@/types';
+import { ParseError, ErrorCodes } from '@/lib/errors';
 
+/**
+ * Parses JSON data into a structured format.
+ *
+ * @param data - The JSON string to parse
+ * @param options - Parsing options
+ * @returns Parsed data with headers and rows
+ * @throws {ParseError} If the JSON is invalid
+ */
 export function parseJson(
   data: string,
   options: JsonOptions = {}
 ): ParsedData {
   const { flattenNested = false } = options;
 
-  const parsed = JSON.parse(data);
+  let parsed: unknown;
+
+  try {
+    parsed = JSON.parse(data);
+  } catch (error) {
+    throw new ParseError(
+      error instanceof Error ? `Invalid JSON: ${error.message}` : 'Invalid JSON format',
+      ErrorCodes.INVALID_JSON,
+      undefined,
+      'json'
+    );
+  }
+
+  // Validate parsed data type
+  if (parsed === null || (typeof parsed !== 'object' && !Array.isArray(parsed))) {
+    throw new ParseError(
+      'JSON must be an array or object',
+      ErrorCodes.INVALID_JSON,
+      undefined,
+      'json'
+    );
+  }
 
   // Handle empty array
   if (Array.isArray(parsed) && parsed.length === 0) {

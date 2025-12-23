@@ -1,6 +1,15 @@
 import Papa from 'papaparse';
 import type { ParsedData, CsvOptions } from '@/types';
+import { ParseError, ErrorCodes } from '@/lib/errors';
 
+/**
+ * Parses CSV data into a structured format.
+ *
+ * @param data - The CSV string to parse
+ * @param options - Parsing options
+ * @returns Parsed data with headers and rows
+ * @throws {ParseError} If the CSV is invalid or empty
+ */
 export function parseCsv(
   data: string,
   options: CsvOptions = {}
@@ -16,12 +25,15 @@ export function parseCsv(
     return {
       headers: [],
       rows: [],
+      format: 'csv',
       metadata: {
         rowCount: 0,
         columnCount: 0,
       },
     };
   }
+
+  try {
 
   const result = Papa.parse(data, {
     delimiter,
@@ -66,6 +78,17 @@ export function parseCsv(
       columnCount: headers.length,
     },
   };
+  } catch (error) {
+    if (error instanceof ParseError) {
+      throw error;
+    }
+    throw new ParseError(
+      error instanceof Error ? error.message : 'Failed to parse CSV data',
+      ErrorCodes.INVALID_CSV,
+      undefined,
+      'csv'
+    );
+  }
 }
 
 export function writeCsv(

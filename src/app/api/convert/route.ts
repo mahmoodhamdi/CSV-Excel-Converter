@@ -1,8 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { parseData, convertData, getOutputFilename } from '@/lib/converter';
+import { convertRequestSchema, outputFormatSchema, inputFormatSchema } from '@/lib/validation/schemas';
+import {
+  generateRequestId,
+  createErrorResponse,
+  handleApiError,
+  MAX_FILE_SIZE,
+} from '@/lib/api-utils';
+import { ErrorCodes, ParseError, FileError } from '@/lib/errors';
 import type { ConvertOptions, InputFormat, OutputFormat } from '@/types';
 
 export async function POST(request: NextRequest) {
+  const requestId = generateRequestId();
+
   try {
     const contentType = request.headers.get('content-type') || '';
 
@@ -16,14 +26,54 @@ export async function POST(request: NextRequest) {
       // Handle file upload
       const formData = await request.formData();
       const file = formData.get('file') as File | null;
-      outputFormat = (formData.get('outputFormat') as OutputFormat) || 'json';
-      inputFormat = (formData.get('inputFormat') as InputFormat) || undefined;
+      const outputFormatRaw = formData.get('outputFormat') as string;
+      const inputFormatRaw = formData.get('inputFormat') as string;
 
       if (!file) {
-        return NextResponse.json(
-          { success: false, error: 'No file provided' },
-          { status: 400 }
+        return createErrorResponse(
+          'No file provided',
+          ErrorCodes.MISSING_REQUIRED,
+          400,
+          requestId
         );
+      }
+
+      // Validate file size
+      if (file.size > MAX_FILE_SIZE) {
+        const maxSizeMB = Math.round(MAX_FILE_SIZE / (1024 * 1024));
+        return createErrorResponse(
+          `File size exceeds maximum allowed size of ${maxSizeMB}MB`,
+          ErrorCodes.FILE_TOO_LARGE,
+          413,
+          requestId,
+          { fileSize: file.size, maxSize: MAX_FILE_SIZE }
+        );
+      }
+
+      // Validate output format
+      const outputFormatResult = outputFormatSchema.safeParse(outputFormatRaw);
+      if (!outputFormatResult.success && outputFormatRaw) {
+        return createErrorResponse(
+          `Invalid output format: ${outputFormatRaw}`,
+          ErrorCodes.VALIDATION_ERROR,
+          400,
+          requestId
+        );
+      }
+      outputFormat = outputFormatResult.success ? outputFormatResult.data : 'json';
+
+      // Validate input format if provided
+      if (inputFormatRaw) {
+        const inputFormatResult = inputFormatSchema.safeParse(inputFormatRaw);
+        if (!inputFormatResult.success) {
+          return createErrorResponse(
+            `Invalid input format: ${inputFormatRaw}`,
+            ErrorCodes.VALIDATION_ERROR,
+            400,
+            requestId
+          );
+        }
+        inputFormat = inputFormatResult.data;
       }
 
       fileName = file.name;
@@ -37,20 +87,29 @@ export async function POST(request: NextRequest) {
 
       // Parse options from form data
       const optionsStr = formData.get('options');
-      if (optionsStr) {
+      if (optionsStr && typeof optionsStr === 'string') {
         try {
-          options = JSON.parse(optionsStr as string);
+          options = JSON.parse(optionsStr);
         } catch {
-          // Ignore invalid options
+          // Log but don't fail - use default options
+          console.warn(`[${requestId}] Invalid options JSON, using defaults`);
         }
       }
     } else {
       // Handle JSON body
       const body = await request.json();
-      inputData = body.data;
-      outputFormat = body.outputFormat || 'json';
-      inputFormat = body.inputFormat;
-      options = body.options || {};
+
+      // Validate request body with Zod
+      const validationResult = convertRequestSchema.safeParse(body);
+      if (!validationResult.success) {
+        return handleApiError(validationResult.error, requestId);
+      }
+
+      const validatedBody = validationResult.data;
+      inputData = validatedBody.data;
+      outputFormat = validatedBody.outputFormat;
+      inputFormat = validatedBody.inputFormat;
+      options = validatedBody.options || {};
       fileName = body.fileName;
     }
 
@@ -58,9 +117,11 @@ export async function POST(request: NextRequest) {
     const parsedData = await parseData(inputData, inputFormat);
 
     if (parsedData.rows.length === 0 && parsedData.headers.length === 0) {
-      return NextResponse.json(
-        { success: false, error: 'No data to convert' },
-        { status: 400 }
+      return createErrorResponse(
+        'No data to convert',
+        ErrorCodes.EMPTY_DATA,
+        400,
+        requestId
       );
     }
 
@@ -71,9 +132,11 @@ export async function POST(request: NextRequest) {
     });
 
     if (!result.success) {
-      return NextResponse.json(
-        { success: false, error: result.error },
-        { status: 500 }
+      return createErrorResponse(
+        result.error || 'Conversion failed',
+        ErrorCodes.CONVERSION_FAILED,
+        500,
+        requestId
       );
     }
 
@@ -86,6 +149,7 @@ export async function POST(request: NextRequest) {
         headers: {
           'Content-Type': result.data.type,
           'Content-Disposition': `attachment; filename="${outputFileName}"`,
+          'X-Request-Id': requestId,
         },
       });
     }
@@ -96,15 +160,9 @@ export async function POST(request: NextRequest) {
       data: result.data,
       metadata: result.metadata,
       fileName: getOutputFilename(fileName, outputFormat),
+      requestId,
     });
   } catch (error) {
-    console.error('Conversion error:', error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : 'Conversion failed',
-      },
-      { status: 500 }
-    );
+    return handleApiError(error, requestId);
   }
 }

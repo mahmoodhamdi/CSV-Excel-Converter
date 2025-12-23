@@ -12,15 +12,76 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Settings, ChevronDown, ChevronUp } from 'lucide-react';
-import { useState } from 'react';
+import { Settings, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
+import { useState, useCallback, useId } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { sqlOptionsSchema, excelOptionsSchema } from '@/lib/validation/schemas';
+
+interface ValidationState {
+  tableName?: string;
+  sheetName?: string;
+}
 
 export function ConvertOptions() {
   const t = useTranslations('options');
-  const { outputFormat, csvOptions, jsonOptions, excelOptions, sqlOptions, setCsvOptions, setJsonOptions, setExcelOptions, setSqlOptions, parsedData } = useConverterStore();
+  const tErrors = useTranslations('errors');
+  const {
+    outputFormat,
+    csvOptions,
+    jsonOptions,
+    excelOptions,
+    sqlOptions,
+    setCsvOptions,
+    setJsonOptions,
+    setExcelOptions,
+    setSqlOptions,
+    parsedData,
+  } = useConverterStore();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [errors, setErrors] = useState<ValidationState>({});
+
+  // Generate unique IDs for accessibility
+  const tableNameId = useId();
+  const tableNameErrorId = useId();
+  const sheetNameId = useId();
+  const sheetNameErrorId = useId();
+
+  // Validate table name
+  const validateTableName = useCallback((value: string): boolean => {
+    const result = sqlOptionsSchema.shape.tableName.safeParse(value);
+    if (!result.success) {
+      const errorMessage = result.error.errors[0]?.message || tErrors('invalidTableName');
+      setErrors((prev) => ({ ...prev, tableName: errorMessage }));
+      return false;
+    }
+    setErrors((prev) => ({ ...prev, tableName: undefined }));
+    return true;
+  }, [tErrors]);
+
+  // Validate sheet name
+  const validateSheetName = useCallback((value: string): boolean => {
+    const result = excelOptionsSchema.shape.sheetName.safeParse(value);
+    if (!result.success) {
+      const errorMessage = result.error.errors[0]?.message || tErrors('invalidSheetName');
+      setErrors((prev) => ({ ...prev, sheetName: errorMessage }));
+      return false;
+    }
+    setErrors((prev) => ({ ...prev, sheetName: undefined }));
+    return true;
+  }, [tErrors]);
+
+  // Handle table name change
+  const handleTableNameChange = useCallback((value: string) => {
+    validateTableName(value);
+    setSqlOptions({ tableName: value });
+  }, [validateTableName, setSqlOptions]);
+
+  // Handle sheet name change
+  const handleSheetNameChange = useCallback((value: string) => {
+    validateSheetName(value);
+    setExcelOptions({ sheetName: value });
+  }, [validateSheetName, setExcelOptions]);
 
   if (!parsedData) {
     return null;
@@ -93,14 +154,27 @@ export function ConvertOptions() {
     <div className="space-y-4">
       <h4 className="font-medium">{t('excelOptions')}</h4>
       <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <Label htmlFor="sheetName">{t('sheetName')}</Label>
+        <div className="space-y-1">
+          <Label htmlFor={sheetNameId}>{t('sheetName')}</Label>
           <Input
-            id="sheetName"
+            id={sheetNameId}
             value={excelOptions.sheetName}
-            onChange={(e) => setExcelOptions({ sheetName: e.target.value })}
+            onChange={(e) => handleSheetNameChange(e.target.value)}
             placeholder={t('sheetNamePlaceholder')}
+            aria-invalid={!!errors.sheetName}
+            aria-describedby={errors.sheetName ? sheetNameErrorId : undefined}
+            className={cn(errors.sheetName && 'border-destructive focus-visible:ring-destructive')}
           />
+          {errors.sheetName && (
+            <p
+              id={sheetNameErrorId}
+              className="text-sm text-destructive flex items-center gap-1"
+              role="alert"
+            >
+              <AlertCircle className="h-3 w-3" />
+              {errors.sheetName}
+            </p>
+          )}
         </div>
         <div>
           <Label htmlFor="headerStyle">{t('headerStyle')}</Label>
@@ -125,14 +199,27 @@ export function ConvertOptions() {
     <div className="space-y-4">
       <h4 className="font-medium">{t('sqlOptions')}</h4>
       <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <Label htmlFor="tableName">{t('tableName')}</Label>
+        <div className="space-y-1">
+          <Label htmlFor={tableNameId}>{t('tableName')}</Label>
           <Input
-            id="tableName"
+            id={tableNameId}
             value={sqlOptions.tableName}
-            onChange={(e) => setSqlOptions({ tableName: e.target.value })}
+            onChange={(e) => handleTableNameChange(e.target.value)}
             placeholder={t('tableNamePlaceholder')}
+            aria-invalid={!!errors.tableName}
+            aria-describedby={errors.tableName ? tableNameErrorId : undefined}
+            className={cn(errors.tableName && 'border-destructive focus-visible:ring-destructive')}
           />
+          {errors.tableName && (
+            <p
+              id={tableNameErrorId}
+              className="text-sm text-destructive flex items-center gap-1"
+              role="alert"
+            >
+              <AlertCircle className="h-3 w-3" />
+              {errors.tableName}
+            </p>
+          )}
         </div>
         <div>
           <Label htmlFor="includeCreate">{t('includeCreate')}</Label>
