@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Convert data
-    const result = convertData(parsedData, {
+    const result = await convertData(parsedData, {
       ...options,
       outputFormat,
     });

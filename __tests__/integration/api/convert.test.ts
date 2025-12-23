@@ -10,7 +10,7 @@ describe('Converter Integration', () => {
       expect(parsed.headers).toEqual(['name', 'age', 'city']);
       expect(parsed.rows).toHaveLength(2);
 
-      const result = convertData(parsed, { outputFormat: 'json' });
+      const result = await convertData(parsed, { outputFormat: 'json' });
 
       expect(result.success).toBe(true);
       expect(result.data).toBeDefined();
@@ -30,7 +30,7 @@ describe('Converter Integration', () => {
       expect(parsed.headers).toContain('age');
       expect(parsed.rows).toHaveLength(2);
 
-      const result = convertData(parsed, { outputFormat: 'csv' });
+      const result = await convertData(parsed, { outputFormat: 'csv' });
 
       expect(result.success).toBe(true);
       expect(result.data).toContain('name,age');
@@ -66,7 +66,7 @@ describe('Converter Integration', () => {
       const csvData = 'name,age\nJohn,30\nJane,25';
       const parsed = await parseData(csvData, 'csv');
 
-      const result = convertData(parsed, {
+      const result = await convertData(parsed, {
         outputFormat: 'sql',
         sql: { tableName: 'users', includeCreate: true },
       });
@@ -83,7 +83,7 @@ describe('Converter Integration', () => {
       const csvData = 'name,age\nJohn,30';
       const parsed = await parseData(csvData, 'csv');
 
-      const result = convertData(parsed, { outputFormat: 'xml' });
+      const result = await convertData(parsed, { outputFormat: 'xml' });
 
       expect(result.success).toBe(true);
       expect(result.data).toContain('<?xml');
@@ -96,7 +96,7 @@ describe('Converter Integration', () => {
       const csvData = 'name,age\nJohn,30';
       const parsed = await parseData(csvData, 'csv');
 
-      const result = convertData(parsed, {
+      const result = await convertData(parsed, {
         outputFormat: 'xlsx',
         excel: { sheetName: 'Data' },
       });

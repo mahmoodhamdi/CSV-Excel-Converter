@@ -167,7 +167,7 @@ export async function retryWithTimeout<T>(
 
 // Import dynamically to avoid circular dependencies
 type ParseDataFn = (data: string | ArrayBuffer, format?: InputFormat) => Promise<ParsedData>;
-type ConvertDataFn = (parsedData: ParsedData, options: ConvertOptions) => ConversionResult;
+type ConvertDataFn = (parsedData: ParsedData, options: ConvertOptions) => Promise<ConversionResult>;
 
 /**
  * Wraps parseData with a timeout.
@@ -188,7 +188,6 @@ export function createParseDataWithTimeout(parseData: ParseDataFn) {
 
 /**
  * Wraps convertData with a timeout.
- * Note: convertData is synchronous, so we wrap it in a Promise.
  */
 export function createConvertDataWithTimeout(convertData: ConvertDataFn) {
   return async function convertDataWithTimeout(
@@ -197,7 +196,7 @@ export function createConvertDataWithTimeout(convertData: ConvertDataFn) {
     timeout: number = TIMEOUTS.CONVERT
   ): Promise<ConversionResult> {
     return withTimeout(
-      Promise.resolve(convertData(parsedData, options)),
+      convertData(parsedData, options),
       timeout,
       'Data conversion'
     );

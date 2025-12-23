@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback, memo } from 'react';
 import { useTranslations } from 'next-intl';
 import { useConverterStore } from '@/stores/converter-store';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,14 +10,38 @@ import { Table, Search, ChevronLeft, ChevronRight, ArrowUpDown } from 'lucide-re
 
 const ROWS_PER_PAGE = 10;
 
+/**
+ * Memoized table row component for better performance
+ */
+const TableRow = memo(function TableRow({
+  row,
+  headers,
+  rowIndex,
+}: {
+  row: Record<string, unknown>;
+  headers: string[];
+  rowIndex: number;
+}) {
+  return (
+    <tr className={rowIndex % 2 === 0 ? 'bg-background' : 'bg-muted/30'}>
+      {headers.map((header) => (
+        <td key={header} className="max-w-xs truncate">
+          {String(row[header] ?? '')}
+        </td>
+      ))}
+    </tr>
+  );
+});
+
 export function DataPreview() {
   const t = useTranslations('preview');
-  const { parsedData } = useConverterStore();
+  const parsedData = useConverterStore((state) => state.parsedData);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
+  // Memoized filtered and sorted rows
   const filteredRows = useMemo(() => {
     if (!parsedData?.rows) return [];
 
@@ -53,20 +77,45 @@ export function DataPreview() {
     return rows;
   }, [parsedData?.rows, searchTerm, sortColumn, sortDirection]);
 
-  const totalPages = Math.ceil(filteredRows.length / ROWS_PER_PAGE);
-  const paginatedRows = filteredRows.slice(
-    currentPage * ROWS_PER_PAGE,
-    (currentPage + 1) * ROWS_PER_PAGE
+  // Memoized pagination values
+  const totalPages = useMemo(
+    () => Math.ceil(filteredRows.length / ROWS_PER_PAGE),
+    [filteredRows.length]
   );
 
-  const handleSort = (column: string) => {
-    if (sortColumn === column) {
-      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
-    } else {
-      setSortColumn(column);
+  const paginatedRows = useMemo(
+    () =>
+      filteredRows.slice(
+        currentPage * ROWS_PER_PAGE,
+        (currentPage + 1) * ROWS_PER_PAGE
+      ),
+    [filteredRows, currentPage]
+  );
+
+  // Memoized handlers
+  const handleSort = useCallback((column: string) => {
+    setSortColumn((prevColumn) => {
+      if (prevColumn === column) {
+        setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+        return column;
+      }
       setSortDirection('asc');
-    }
-  };
+      return column;
+    });
+  }, []);
+
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(0);
+  }, []);
+
+  const handlePrevPage = useCallback(() => {
+    setCurrentPage((prev) => Math.max(0, prev - 1));
+  }, []);
+
+  const handleNextPage = useCallback(() => {
+    setCurrentPage((prev) => Math.min(totalPages - 1, prev + 1));
+  }, [totalPages]);
 
   if (!parsedData || parsedData.headers.length === 0) {
     return (
@@ -108,10 +157,7 @@ export function DataPreview() {
           <Input
             placeholder={t('searchPlaceholder')}
             value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(0);
-            }}
+            onChange={handleSearchChange}
             className="pl-10"
           />
         </div>
@@ -144,13 +190,12 @@ export function DataPreview() {
                 </tr>
               ) : (
                 paginatedRows.map((row, rowIndex) => (
-                  <tr key={rowIndex}>
-                    {parsedData.headers.map((header) => (
-                      <td key={header} className="max-w-xs truncate">
-                        {String(row[header] ?? '')}
-                      </td>
-                    ))}
-                  </tr>
+                  <TableRow
+                    key={rowIndex}
+                    row={row}
+                    headers={parsedData.headers}
+                    rowIndex={rowIndex}
+                  />
                 ))
               )}
             </tbody>
@@ -171,7 +216,7 @@ export function DataPreview() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage((prev) => Math.max(0, prev - 1))}
+                onClick={handlePrevPage}
                 disabled={currentPage === 0}
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -179,7 +224,7 @@ export function DataPreview() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage((prev) => Math.min(totalPages - 1, prev + 1))}
+                onClick={handleNextPage}
                 disabled={currentPage === totalPages - 1}
               >
                 <ChevronRight className="h-4 w-4" />

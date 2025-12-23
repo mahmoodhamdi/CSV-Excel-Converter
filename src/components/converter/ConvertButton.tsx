@@ -18,7 +18,7 @@ export function ConvertButton() {
     getConvertOptions,
   } = useConverterStore();
 
-  const handleConvert = useCallback(() => {
+  const handleConvert = useCallback(async () => {
     if (!parsedData) return;
 
     setIsConverting(true);
@@ -26,7 +26,7 @@ export function ConvertButton() {
 
     try {
       const options = getConvertOptions();
-      const result = convertData(parsedData, options);
+      const result = await convertData(parsedData, options);
 
       if (result.success) {
         setResult(result);

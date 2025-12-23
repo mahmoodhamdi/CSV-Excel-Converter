@@ -66,10 +66,10 @@ export async function parseData(
   }
 }
 
-export function convertData(
+export async function convertData(
   parsedData: ParsedData,
   options: ConvertOptions
-): ConversionResult {
+): Promise<ConversionResult> {
   const { headers, rows } = parsedData;
   const { outputFormat } = options;
 
@@ -93,8 +93,8 @@ export function convertData(
 
       case 'xlsx':
       case 'xls':
-        const workbook = writeExcel(headers, rows, options.excel);
-        const buffer = workbookToBuffer(workbook, outputFormat);
+        const workbook = await writeExcel(headers, rows, options.excel);
+        const buffer = await workbookToBuffer(workbook, outputFormat);
         data = new Blob([buffer], {
           type:
             outputFormat === 'xlsx'

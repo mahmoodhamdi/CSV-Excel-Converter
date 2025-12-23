@@ -51,6 +51,7 @@ export interface ParsedData {
     fileName?: string;
     fileSize?: number;
     sheets?: string[];
+    truncated?: boolean;
   };
 }
 
