@@ -1,12 +1,26 @@
 import type { ParsedData, ExcelOptions } from '@/types';
 import type * as XLSXType from 'xlsx';
 
+/**
+ * @fileoverview Excel file parsing and writing utilities using the xlsx library.
+ *
+ * This module provides functions for reading and writing Excel files (.xlsx, .xls).
+ * The xlsx library is dynamically imported to reduce initial bundle size (~400KB savings).
+ *
+ * @module lib/converter/excel
+ */
+
 // Lazy-loaded XLSX module
 let xlsxModule: typeof XLSXType | null = null;
 
 /**
- * Dynamically load the XLSX library
- * This reduces initial bundle size by ~400KB
+ * Dynamically loads the XLSX library on first use.
+ *
+ * Uses lazy loading to reduce initial bundle size by ~400KB.
+ * The module is cached after first load for subsequent calls.
+ *
+ * @returns Promise resolving to the XLSX module
+ * @internal
  */
 async function getXlsx(): Promise<typeof XLSXType> {
   if (!xlsxModule) {
@@ -16,7 +30,17 @@ async function getXlsx(): Promise<typeof XLSXType> {
 }
 
 /**
- * Calculate optimized column widths using sampling
+ * Calculates optimal column widths based on content sampling.
+ *
+ * Uses a sampling approach for performance - only checks the first N rows
+ * to determine column widths. This prevents performance issues with large datasets.
+ *
+ * @param headers - Array of column header names
+ * @param rows - Array of row data objects
+ * @param maxWidth - Maximum column width in characters (default: 50)
+ * @param sampleSize - Number of rows to sample for width calculation (default: 100)
+ * @returns Array of column width objects for xlsx library
+ * @internal
  */
 function calculateColumnWidths(
   headers: string[],
@@ -44,7 +68,30 @@ function calculateColumnWidths(
 }
 
 /**
- * Parse Excel file (async due to dynamic import)
+ * Parses an Excel file from an ArrayBuffer into structured data.
+ *
+ * Supports both .xlsx and .xls formats. Uses dynamic import for the xlsx library
+ * to reduce initial bundle size. Handles multi-sheet workbooks with sheet selection.
+ *
+ * @param buffer - The Excel file as an ArrayBuffer
+ * @param options - Parsing options
+ * @param options.selectedSheet - Sheet to parse (index number or name, default: 0)
+ * @returns Promise resolving to parsed data with headers, rows, and metadata
+ *
+ * @example
+ * ```typescript
+ * // Parse first sheet
+ * const file = await fetch('data.xlsx').then(r => r.arrayBuffer());
+ * const data = await parseExcel(file);
+ * console.log(data.headers); // ['Name', 'Age', 'City']
+ * console.log(data.rows);    // [{ Name: 'John', Age: 30, City: 'NYC' }, ...]
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Parse specific sheet by name
+ * const data = await parseExcel(file, { selectedSheet: 'Sales Data' });
+ * ```
  */
 export async function parseExcel(
   buffer: ArrayBuffer,
@@ -83,7 +130,23 @@ export async function parseExcel(
 }
 
 /**
- * Synchronous version for when XLSX is already loaded
+ * Synchronously parses an Excel file when the xlsx library is already loaded.
+ *
+ * Use this for better performance when you know the xlsx module has been preloaded.
+ * Throws an error if the module hasn't been loaded yet.
+ *
+ * @param buffer - The Excel file as an ArrayBuffer
+ * @param options - Parsing options (same as parseExcel)
+ * @returns Parsed data with headers, rows, and metadata
+ * @throws {Error} If the xlsx module hasn't been loaded
+ *
+ * @example
+ * ```typescript
+ * // Preload the module first
+ * await preloadXlsx();
+ * // Then use sync version for subsequent parses
+ * const data = parseExcelSync(buffer);
+ * ```
  */
 export function parseExcelSync(
   buffer: ArrayBuffer,
@@ -125,6 +188,17 @@ export function parseExcelSync(
   return parseExcelData(data, workbook.SheetNames);
 }
 
+/**
+ * Converts raw Excel sheet data (2D array) into structured ParsedData format.
+ *
+ * Treats the first row as headers and subsequent rows as data.
+ * Used internally by parseExcel and parseExcelSync.
+ *
+ * @param data - 2D array of cell values from Excel sheet
+ * @param sheets - Optional array of sheet names from the workbook
+ * @returns Parsed data with headers, rows, and metadata
+ * @internal
+ */
 export function parseExcelData(
   data: unknown[][],
   sheets?: string[]
@@ -164,7 +238,30 @@ export function parseExcelData(
 }
 
 /**
- * Write Excel file (async due to dynamic import)
+ * Creates an Excel workbook from structured data.
+ *
+ * Generates a workbook with a single sheet containing the provided data.
+ * Supports various formatting options including auto-fit columns, frozen headers,
+ * and header styling.
+ *
+ * @param headers - Array of column header names
+ * @param rows - Array of row data objects keyed by header names
+ * @param options - Excel writing options
+ * @param options.sheetName - Name for the worksheet (default: 'Sheet1')
+ * @param options.autoFitColumns - Auto-adjust column widths to fit content (default: true)
+ * @param options.freezeHeader - Freeze the header row for scrolling (default: false)
+ * @param options.headerStyle - Apply bold styling to header row (default: false)
+ * @returns Promise resolving to the XLSX WorkBook object
+ *
+ * @example
+ * ```typescript
+ * const workbook = await writeExcel(
+ *   ['Name', 'Age'],
+ *   [{ Name: 'John', Age: 30 }, { Name: 'Jane', Age: 25 }],
+ *   { sheetName: 'Users', autoFitColumns: true, freezeHeader: true }
+ * );
+ * const buffer = await workbookToBuffer(workbook);
+ * ```
  */
 export async function writeExcel(
   headers: string[],
@@ -218,7 +315,18 @@ export async function writeExcel(
 }
 
 /**
- * Convert workbook to ArrayBuffer (async)
+ * Converts an Excel workbook to an ArrayBuffer for download or storage.
+ *
+ * @param workbook - The XLSX WorkBook object to convert
+ * @param type - Output format: 'xlsx' for modern Excel, 'xls' for legacy (default: 'xlsx')
+ * @returns Promise resolving to ArrayBuffer containing the Excel file
+ *
+ * @example
+ * ```typescript
+ * const workbook = await writeExcel(headers, rows);
+ * const buffer = await workbookToBuffer(workbook, 'xlsx');
+ * // Use buffer for file download or storage
+ * ```
  */
 export async function workbookToBuffer(
   workbook: XLSXType.WorkBook,
@@ -230,7 +338,20 @@ export async function workbookToBuffer(
 }
 
 /**
- * Convert workbook to Base64 string (async)
+ * Converts an Excel workbook to a Base64-encoded string.
+ *
+ * Useful for embedding Excel files in JSON responses or data URIs.
+ *
+ * @param workbook - The XLSX WorkBook object to convert
+ * @param type - Output format: 'xlsx' for modern Excel, 'xls' for legacy (default: 'xlsx')
+ * @returns Promise resolving to Base64-encoded string of the Excel file
+ *
+ * @example
+ * ```typescript
+ * const workbook = await writeExcel(headers, rows);
+ * const base64 = await workbookToBase64(workbook);
+ * const dataUri = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${base64}`;
+ * ```
  */
 export async function workbookToBase64(
   workbook: XLSXType.WorkBook,
@@ -242,21 +363,48 @@ export async function workbookToBase64(
 }
 
 /**
- * Get sheet names from workbook
+ * Retrieves all sheet names from an Excel workbook.
+ *
+ * @param workbook - The XLSX WorkBook object
+ * @returns Array of sheet names in order
+ *
+ * @example
+ * ```typescript
+ * const workbook = XLSX.read(buffer);
+ * const sheets = getSheetNames(workbook);
+ * // ['Sheet1', 'Sales Data', 'Summary']
+ * ```
  */
 export function getSheetNames(workbook: XLSXType.WorkBook): string[] {
   return workbook.SheetNames;
 }
 
 /**
- * Check if XLSX module is loaded
+ * Checks if the XLSX module has been loaded.
+ *
+ * Use this to determine if parseExcelSync can be safely called.
+ *
+ * @returns True if xlsx module is loaded, false otherwise
  */
 export function isXlsxLoaded(): boolean {
   return xlsxModule !== null;
 }
 
 /**
- * Preload XLSX module
+ * Preloads the XLSX module for faster subsequent operations.
+ *
+ * Call this early in your application lifecycle to ensure the xlsx library
+ * is ready when needed, avoiding loading delays during user interactions.
+ *
+ * @returns Promise that resolves when the module is loaded
+ *
+ * @example
+ * ```typescript
+ * // In your app initialization
+ * useEffect(() => {
+ *   preloadXlsx();
+ * }, []);
+ * ```
  */
 export async function preloadXlsx(): Promise<void> {
   await getXlsx();

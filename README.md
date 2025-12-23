@@ -1,5 +1,10 @@
 # CSV Excel Converter
 
+[![Build Status](https://github.com/mahmoodhamdi/CSV-Excel-Converter/actions/workflows/ci.yml/badge.svg)](https://github.com/mahmoodhamdi/CSV-Excel-Converter/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-14-black.svg)](https://nextjs.org/)
+
 > Convert between CSV, JSON, Excel, and more - instantly!
 
 A production-ready CSV/Excel/JSON converter web application built with Next.js 14, TypeScript, and Tailwind CSS. Features bidirectional conversion between multiple data formats, live data preview, column mapping, data transformation, batch conversion, and a REST API.
@@ -56,7 +61,19 @@ npm run start
 | **XML** | CSV, JSON, Excel, TSV, SQL |
 | **TSV** | CSV, JSON, Excel, XML, SQL |
 
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [API Documentation](/api-docs) | Interactive Swagger UI for API exploration |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | System architecture and diagrams |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Development guidelines and contribution process |
+| [SECURITY.md](SECURITY.md) | Security policy and vulnerability reporting |
+| [CHANGELOG.md](CHANGELOG.md) | Version history and release notes |
+
 ## API Usage
+
+The API provides endpoints for data conversion, parsing, and format information. Full interactive documentation is available at `/api-docs`.
 
 ### Convert Data
 
@@ -91,6 +108,10 @@ curl https://your-domain.com/api/formats
 ```bash
 curl https://your-domain.com/api/health
 ```
+
+### OpenAPI Specification
+
+The OpenAPI 3.0 specification is available at `/api/openapi` for use with API clients and code generators.
 
 ## Development
 
@@ -194,13 +215,32 @@ cd docker
 docker-compose up
 ```
 
+## Security
+
+We take security seriously. If you discover a security vulnerability, please report it responsibly:
+
+- **Email**: mwm.softwars.solutions@gmail.com
+- See [SECURITY.md](SECURITY.md) for our security policy
+
+### Security Features
+
+- XXE protection for XML parsing
+- SQL injection prevention with proper escaping
+- SSRF protection for URL imports
+- Input validation with Zod schemas
+- 50MB file size limits
+
 ## Contributing
 
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+
+Quick start:
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+3. Write tests for your changes
+4. Commit your changes (`git commit -m 'feat: add amazing feature'`)
+5. Push to the branch (`git push origin feature/amazing-feature`)
+6. Open a Pull Request
 
 ## Contact
 

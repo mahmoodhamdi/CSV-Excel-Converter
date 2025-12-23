@@ -1,5 +1,34 @@
+/**
+ * @fileoverview Format detection utilities for automatic data format identification.
+ *
+ * This module provides functions to detect the format of input data based on
+ * content analysis, file extensions, and MIME types.
+ *
+ * @module lib/converter/detect
+ */
+
 import type { InputFormat } from '@/types';
 
+/**
+ * Detects the format of data by analyzing its content.
+ *
+ * Uses heuristics to identify the most likely format:
+ * - JSON: Data starts and ends with { } or [ ]
+ * - XML: Data starts with `<?xml` or `<` and has closing tags
+ * - TSV: Tab characters detected as delimiter
+ * - CSV: Default fallback for other text data
+ *
+ * @param data - The string data to analyze
+ * @returns The detected input format
+ *
+ * @example
+ * ```typescript
+ * detectFormat('[{"name": "John"}]');  // Returns 'json'
+ * detectFormat('<root><item/></root>'); // Returns 'xml'
+ * detectFormat('name\tage\nJohn\t30');  // Returns 'tsv'
+ * detectFormat('name,age\nJohn,30');    // Returns 'csv'
+ * ```
+ */
 export function detectFormat(data: string): InputFormat {
   const trimmed = data.trim();
 
@@ -34,6 +63,25 @@ export function detectFormat(data: string): InputFormat {
   return 'csv';
 }
 
+/**
+ * Detects the most likely delimiter used in delimited text data.
+ *
+ * Analyzes the first few lines to identify the delimiter by:
+ * - Counting occurrences of common delimiters (comma, semicolon, tab, pipe)
+ * - Checking for consistent counts across lines
+ * - Applying weights for delimiter likelihood
+ *
+ * @param data - The delimited text data to analyze
+ * @returns The detected delimiter character (defaults to comma)
+ *
+ * @example
+ * ```typescript
+ * detectDelimiter('a,b,c\n1,2,3');  // Returns ','
+ * detectDelimiter('a;b;c\n1;2;3');  // Returns ';'
+ * detectDelimiter('a\tb\tc\n1\t2\t3'); // Returns '\t'
+ * detectDelimiter('a|b|c\n1|2|3');  // Returns '|'
+ * ```
+ */
 export function detectDelimiter(data: string): string {
   const delimiters = [
     { char: ',', weight: 1 },
@@ -79,6 +127,23 @@ export function detectDelimiter(data: string): string {
   return detectedDelimiter;
 }
 
+/**
+ * Detects the format based on a filename's extension.
+ *
+ * Maps common file extensions to their corresponding formats.
+ * Returns null if the extension is not recognized.
+ *
+ * @param filename - The filename to analyze
+ * @returns The detected format or null if unknown
+ *
+ * @example
+ * ```typescript
+ * detectFormatFromFilename('data.csv');   // Returns 'csv'
+ * detectFormatFromFilename('data.xlsx');  // Returns 'xlsx'
+ * detectFormatFromFilename('data.json');  // Returns 'json'
+ * detectFormatFromFilename('data.txt');   // Returns null
+ * ```
+ */
 export function detectFormatFromFilename(filename: string): InputFormat | null {
   const ext = filename.split('.').pop()?.toLowerCase();
 
@@ -94,6 +159,23 @@ export function detectFormatFromFilename(filename: string): InputFormat | null {
   return formatMap[ext || ''] || null;
 }
 
+/**
+ * Detects the format based on a MIME type.
+ *
+ * Maps standard MIME types to their corresponding formats.
+ * Returns null if the MIME type is not recognized.
+ *
+ * @param mimeType - The MIME type to analyze
+ * @returns The detected format or null if unknown
+ *
+ * @example
+ * ```typescript
+ * detectFormatFromMimeType('text/csv');           // Returns 'csv'
+ * detectFormatFromMimeType('application/json');   // Returns 'json'
+ * detectFormatFromMimeType('application/xml');    // Returns 'xml'
+ * detectFormatFromMimeType('text/plain');         // Returns null
+ * ```
+ */
 export function detectFormatFromMimeType(mimeType: string): InputFormat | null {
   const mimeMap: Record<string, InputFormat> = {
     'text/csv': 'csv',

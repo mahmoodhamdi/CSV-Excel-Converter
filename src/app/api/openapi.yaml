@@ -1,0 +1,565 @@
+openapi: 3.0.3
+info:
+  title: CSV Excel Converter API
+  description: |
+    REST API for converting between CSV, JSON, Excel, XML, TSV, and SQL formats.
+
+    ## Features
+    - Multiple format support (CSV, TSV, JSON, XLSX, XLS, XML, SQL)
+    - Batch conversion
+    - Format auto-detection
+    - Customizable options for each format
+    - Data parsing and preview
+
+    ## Rate Limiting
+    - 100 requests per minute per IP
+    - 50MB maximum file size
+
+    ## Error Handling
+    All errors return a consistent JSON structure with `success: false`, an `error` message, and an error `code`.
+  version: 1.0.0
+  contact:
+    name: CSV Excel Converter Support
+    email: mwm.softwars.solutions@gmail.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000
+    description: Development server
+  - url: https://csv-excel-converter.vercel.app
+    description: Production server
+
+tags:
+  - name: Conversion
+    description: Data conversion endpoints
+  - name: Parsing
+    description: Data parsing and preview endpoints
+  - name: Formats
+    description: Format information endpoints
+  - name: Health
+    description: Health check and status endpoints
+
+paths:
+  /api/convert:
+    post:
+      summary: Convert data between formats
+      description: |
+        Converts data from one format to another with optional configuration.
+        Supports both JSON body and multipart file uploads.
+      operationId: convertData
+      tags:
+        - Conversion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConvertRequest'
+            examples:
+              csvToJson:
+                summary: Convert CSV to JSON
+                value:
+                  data: "name,age,city\nJohn,30,New York\nJane,25,Los Angeles"
+                  inputFormat: csv
+                  outputFormat: json
+                  options:
+                    json:
+                      prettyPrint: true
+                      indentation: 2
+              jsonToCsv:
+                summary: Convert JSON to CSV
+                value:
+                  data: '[{"name":"John","age":30},{"name":"Jane","age":25}]'
+                  inputFormat: json
+                  outputFormat: csv
+                  options:
+                    csv:
+                      delimiter: ","
+              csvToSql:
+                summary: Convert CSV to SQL INSERT statements
+                value:
+                  data: "name,age\nJohn,30\nJane,25"
+                  inputFormat: csv
+                  outputFormat: sql
+                  options:
+                    sql:
+                      tableName: users
+                      includeCreate: true
+                      dialect: postgresql
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+                - outputFormat
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: File to convert
+                outputFormat:
+                  type: string
+                  enum: [csv, tsv, json, xlsx, xls, xml, sql]
+                  description: Desired output format
+                options:
+                  type: string
+                  description: JSON string of conversion options
+      responses:
+        '200':
+          description: Successful conversion
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConvertResponse'
+              example:
+                success: true
+                data: '[{"name":"John","age":"30"},{"name":"Jane","age":"25"}]'
+                format: json
+                metadata:
+                  inputFormat: csv
+                  outputFormat: json
+                  rowCount: 2
+                  columnCount: 2
+                requestId: "550e8400-e29b-41d4-a716-446655440000"
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+              description: Binary file download for Excel formats
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/parse:
+    post:
+      summary: Parse data and return structured result
+      description: |
+        Parses input data and returns headers, rows, and metadata.
+        Useful for previewing data before conversion.
+      operationId: parseData
+      tags:
+        - Parsing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ParseRequest'
+            examples:
+              parseCsv:
+                summary: Parse CSV data
+                value:
+                  data: "name,age,city\nJohn,30,New York\nJane,25,Los Angeles"
+                  format: csv
+              parseJson:
+                summary: Parse JSON data
+                value:
+                  data: '[{"name":"John","age":30},{"name":"Jane","age":25}]'
+                  format: json
+              autoDetect:
+                summary: Auto-detect format
+                value:
+                  data: "name,age\nJohn,30"
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: File to parse
+      responses:
+        '200':
+          description: Successful parsing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParseResponse'
+              example:
+                success: true
+                data:
+                  headers: ["name", "age", "city"]
+                  rows:
+                    - name: "John"
+                      age: "30"
+                      city: "New York"
+                    - name: "Jane"
+                      age: "25"
+                      city: "Los Angeles"
+                  format: csv
+                  metadata:
+                    rowCount: 2
+                    columnCount: 3
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/formats:
+    get:
+      summary: Get supported formats
+      description: Returns list of supported input and output formats with their extensions and MIME types
+      operationId: getFormats
+      tags:
+        - Formats
+      responses:
+        '200':
+          description: List of supported formats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormatsResponse'
+              example:
+                input:
+                  - format: csv
+                    name: "CSV"
+                    description: "Comma-separated values"
+                    extensions: [".csv"]
+                    mimeTypes: ["text/csv", "application/csv"]
+                  - format: json
+                    name: "JSON"
+                    description: "JavaScript Object Notation"
+                    extensions: [".json"]
+                    mimeTypes: ["application/json"]
+                  - format: xlsx
+                    name: "Excel (XLSX)"
+                    description: "Modern Excel format"
+                    extensions: [".xlsx"]
+                    mimeTypes: ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"]
+                output:
+                  - format: csv
+                    name: "CSV"
+                  - format: json
+                    name: "JSON"
+                  - format: xlsx
+                    name: "Excel (XLSX)"
+                  - format: sql
+                    name: "SQL INSERT statements"
+
+  /api/health:
+    get:
+      summary: Health check
+      description: Returns server health status and version information
+      operationId: healthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: healthy
+                timestamp: "2024-01-15T10:30:00Z"
+                version: "1.0.0"
+
+components:
+  schemas:
+    ConvertRequest:
+      type: object
+      required:
+        - data
+        - outputFormat
+      properties:
+        data:
+          type: string
+          description: Data to convert (string for text formats, base64 for binary)
+          maxLength: 52428800
+        inputFormat:
+          type: string
+          enum: [csv, tsv, json, xlsx, xls, xml]
+          description: Input format (auto-detected if not provided)
+        outputFormat:
+          type: string
+          enum: [csv, tsv, json, xlsx, xls, xml, sql]
+          description: Desired output format
+        options:
+          $ref: '#/components/schemas/ConvertOptions'
+
+    ConvertOptions:
+      type: object
+      description: Format-specific conversion options
+      properties:
+        csv:
+          $ref: '#/components/schemas/CsvOptions'
+        json:
+          $ref: '#/components/schemas/JsonOptions'
+        excel:
+          $ref: '#/components/schemas/ExcelOptions'
+        sql:
+          $ref: '#/components/schemas/SqlOptions'
+
+    CsvOptions:
+      type: object
+      properties:
+        delimiter:
+          type: string
+          default: ","
+          maxLength: 1
+          description: Column delimiter character
+          example: ","
+        hasHeader:
+          type: boolean
+          default: true
+          description: Whether first row contains headers
+        skipEmptyLines:
+          type: boolean
+          default: true
+          description: Skip empty lines when parsing
+        trimValues:
+          type: boolean
+          default: true
+          description: Trim whitespace from cell values
+
+    JsonOptions:
+      type: object
+      properties:
+        prettyPrint:
+          type: boolean
+          default: true
+          description: Format output with indentation
+        indentation:
+          type: integer
+          minimum: 0
+          maximum: 8
+          default: 2
+          description: Number of spaces for indentation
+        arrayFormat:
+          type: string
+          enum: [arrayOfObjects, objectOfArrays]
+          default: arrayOfObjects
+          description: JSON structure format
+
+    ExcelOptions:
+      type: object
+      properties:
+        sheetName:
+          type: string
+          default: "Sheet1"
+          maxLength: 31
+          description: Name of the Excel sheet
+        autoFitColumns:
+          type: boolean
+          default: true
+          description: Auto-fit column widths
+        freezeHeader:
+          type: boolean
+          default: false
+          description: Freeze the header row
+        headerStyle:
+          type: boolean
+          default: true
+          description: Apply bold styling to header row
+
+    SqlOptions:
+      type: object
+      properties:
+        tableName:
+          type: string
+          default: "my_table"
+          pattern: "^[a-zA-Z_][a-zA-Z0-9_]*$"
+          maxLength: 128
+          description: SQL table name
+        includeCreate:
+          type: boolean
+          default: false
+          description: Include CREATE TABLE statement
+        batchSize:
+          type: integer
+          minimum: 1
+          maximum: 10000
+          default: 100
+          description: Number of rows per INSERT statement
+        dialect:
+          type: string
+          enum: [mysql, postgresql, sqlite, mssql]
+          default: "postgresql"
+          description: SQL dialect for proper escaping
+
+    ConvertResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Whether the conversion succeeded
+        data:
+          type: string
+          description: Converted data (for text formats)
+        format:
+          type: string
+          description: Output format
+        metadata:
+          type: object
+          properties:
+            inputFormat:
+              type: string
+            outputFormat:
+              type: string
+            rowCount:
+              type: integer
+            columnCount:
+              type: integer
+        requestId:
+          type: string
+          format: uuid
+          description: Unique request identifier for debugging
+
+    ParseRequest:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: string
+          description: Data to parse
+          maxLength: 52428800
+        format:
+          type: string
+          enum: [csv, tsv, json, xlsx, xls, xml]
+          description: Data format (auto-detected if not provided)
+
+    ParseResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            headers:
+              type: array
+              items:
+                type: string
+              description: Column headers
+            rows:
+              type: array
+              items:
+                type: object
+              description: Data rows as objects
+            format:
+              type: string
+              description: Detected or specified format
+            metadata:
+              type: object
+              properties:
+                rowCount:
+                  type: integer
+                columnCount:
+                  type: integer
+
+    FormatsResponse:
+      type: object
+      properties:
+        input:
+          type: array
+          items:
+            type: object
+            properties:
+              format:
+                type: string
+              name:
+                type: string
+              description:
+                type: string
+              extensions:
+                type: array
+                items:
+                  type: string
+              mimeTypes:
+                type: array
+                items:
+                  type: string
+        output:
+          type: array
+          items:
+            type: object
+            properties:
+              format:
+                type: string
+              name:
+                type: string
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          description: Human-readable error message
+        code:
+          type: string
+          description: Machine-readable error code
+        requestId:
+          type: string
+          format: uuid
+          description: Request ID for debugging
+
+  responses:
+    BadRequest:
+      description: Invalid request - validation failed or malformed data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            validationError:
+              summary: Validation error
+              value:
+                success: false
+                error: "Validation failed: outputFormat is required"
+                code: "VALIDATION_ERROR"
+                requestId: "550e8400-e29b-41d4-a716-446655440000"
+            invalidFormat:
+              summary: Invalid format
+              value:
+                success: false
+                error: "Unsupported input format: pdf"
+                code: "INVALID_FORMAT"
+                requestId: "550e8400-e29b-41d4-a716-446655440001"
+
+    PayloadTooLarge:
+      description: File or data exceeds maximum size limit (50MB)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: "File too large. Maximum size is 50MB"
+            code: "FILE_TOO_LARGE"
+            requestId: "550e8400-e29b-41d4-a716-446655440002"
+
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: "An unexpected error occurred. Please try again."
+            code: "INTERNAL_ERROR"
+            requestId: "550e8400-e29b-41d4-a716-446655440003"

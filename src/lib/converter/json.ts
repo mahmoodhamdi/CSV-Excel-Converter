@@ -2,12 +2,39 @@ import type { ParsedData, JsonOptions } from '@/types';
 import { ParseError, ErrorCodes } from '@/lib/errors';
 
 /**
- * Parses JSON data into a structured format.
+ * Parses JSON data into a structured tabular format with headers and rows.
+ *
+ * Converts JSON arrays or objects into a normalized table structure.
+ * Supports:
+ * - Arrays of objects (each object becomes a row)
+ * - Single objects (converted to single-row table)
+ * - Nested object flattening (with dot notation keys)
  *
  * @param data - The JSON string to parse
  * @param options - Parsing options
- * @returns Parsed data with headers and rows
- * @throws {ParseError} If the JSON is invalid
+ * @param options.flattenNested - Whether to flatten nested objects using dot notation (default: false)
+ * @returns Parsed data with headers, rows, rawData, format, and metadata
+ * @throws {ParseError} If the JSON is invalid or cannot be parsed
+ *
+ * @example
+ * ```typescript
+ * // Array of objects
+ * const data = parseJson('[{"name":"John","age":30},{"name":"Jane","age":25}]');
+ * // Returns:
+ * // {
+ * //   headers: ['name', 'age'],
+ * //   rows: [{ name: 'John', age: 30 }, { name: 'Jane', age: 25 }],
+ * //   format: 'json',
+ * //   metadata: { rowCount: 2, columnCount: 2 }
+ * // }
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // With nested object flattening
+ * const data = parseJson('[{"user":{"name":"John"}}]', { flattenNested: true });
+ * // headers: ['user.name'], rows: [{ 'user.name': 'John' }]
+ * ```
  */
 export function parseJson(
   data: string,
@@ -78,6 +105,35 @@ export function parseJson(
   };
 }
 
+/**
+ * Writes data to JSON format.
+ *
+ * Converts structured data (headers and rows) to a JSON string.
+ * Supports pretty printing with configurable indentation.
+ *
+ * @param headers - Array of column header names to include in output
+ * @param rows - Array of row objects with values keyed by header names
+ * @param options - Writing options
+ * @param options.prettyPrint - Whether to format with indentation (default: true)
+ * @param options.indentation - Number of spaces for indentation (default: 2)
+ * @returns JSON formatted string
+ *
+ * @example
+ * ```typescript
+ * const json = writeJson(
+ *   ['name', 'age'],
+ *   [{ name: 'John', age: 30 }],
+ *   { prettyPrint: true, indentation: 2 }
+ * );
+ * // Returns:
+ * // [
+ * //   {
+ * //     "name": "John",
+ * //     "age": 30
+ * //   }
+ * // ]
+ * ```
+ */
 export function writeJson(
   headers: string[],
   rows: Record<string, unknown>[],
@@ -103,6 +159,29 @@ export function writeJson(
   return JSON.stringify(filteredRows);
 }
 
+/**
+ * Recursively flattens a nested object into a single-level object with dot notation keys.
+ *
+ * Converts nested object hierarchies into flat key-value pairs where nested keys
+ * are joined with dots. Arrays are converted to comma-separated strings.
+ *
+ * @param obj - The object to flatten
+ * @param prefix - Optional prefix for all keys (used internally for recursion)
+ * @returns Flattened object with dot-notation keys
+ *
+ * @example
+ * ```typescript
+ * const flat = flattenObject({ user: { name: 'John', address: { city: 'NYC' } } });
+ * // Returns: { 'user.name': 'John', 'user.address.city': 'NYC' }
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Arrays are joined as comma-separated strings
+ * const flat = flattenObject({ tags: ['a', 'b', 'c'] });
+ * // Returns: { tags: 'a,b,c' }
+ * ```
+ */
 export function flattenObject(
   obj: Record<string, unknown>,
   prefix = ''
@@ -129,6 +208,21 @@ export function flattenObject(
   return result;
 }
 
+/**
+ * Converts a flattened object with dot notation keys back into a nested object structure.
+ *
+ * Reverses the operation performed by `flattenObject`, reconstructing the original
+ * nested hierarchy from dot-notation keys.
+ *
+ * @param obj - The flattened object with dot-notation keys
+ * @returns Nested object structure
+ *
+ * @example
+ * ```typescript
+ * const nested = unflattenObject({ 'user.name': 'John', 'user.address.city': 'NYC' });
+ * // Returns: { user: { name: 'John', address: { city: 'NYC' } } }
+ * ```
+ */
 export function unflattenObject(obj: Record<string, unknown>): Record<string, unknown> {
   const result: Record<string, unknown> = {};
 
