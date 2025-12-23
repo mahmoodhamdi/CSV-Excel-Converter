@@ -59,9 +59,9 @@ describe('DataPreview', () => {
     expect(screen.getByText('Bob')).toBeInTheDocument();
   });
 
-  it('should render table element', () => {
+  it('should render table element with grid role for accessibility', () => {
     render(<DataPreview />);
-    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(screen.getByRole('grid')).toBeInTheDocument();
   });
 
   it('should render column headers in header row', () => {

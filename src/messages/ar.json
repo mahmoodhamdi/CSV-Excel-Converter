@@ -68,6 +68,8 @@
     "title": "ارفع ملفك",
     "dropzone": "اسحب وأفلت ملفك هنا",
     "dropzoneActive": "أفلت ملفك هنا...",
+    "dropzoneLabel": "منطقة رفع الملفات. اضغط Enter أو Space لتصفح الملفات.",
+    "fileInputLabel": "اختر ملفًا للرفع",
     "browse": "تصفح الملفات",
     "paste": "أو الصق بياناتك",
     "pasteHint": "الصق بيانات CSV أو JSON أو TSV",
@@ -80,6 +82,7 @@
     "maxSize": "الحد الأقصى لحجم الملف: {size} ميجابايت",
     "fileSelected": "تم اختيار الملف",
     "removeFile": "إزالة",
+    "clearFile": "إزالة الملف المحدد",
     "parseError": "فشل قراءة الملف",
     "invalidFormat": "صيغة ملف غير صالحة"
   },
@@ -100,7 +103,16 @@
     "noResults": "لا توجد نتائج مطابقة",
     "sortAsc": "ترتيب تصاعدي",
     "sortDesc": "ترتيب تنازلي",
-    "clearSort": "إلغاء الترتيب"
+    "clearSort": "إلغاء الترتيب",
+    "tableLabel": "جدول معاينة البيانات",
+    "tableCaption": "جدول بيانات يحتوي على {rows} صف و {cols} عمود",
+    "sortedAsc": "مرتب تصاعدياً",
+    "sortedDesc": "مرتب تنازلياً",
+    "clickToSort": "اضغط للترتيب",
+    "paginationLabel": "تصفح الجدول",
+    "paginationControls": "أزرار التنقل بين الصفحات",
+    "previousPage": "الصفحة السابقة",
+    "nextPage": "الصفحة التالية"
   },
   "convert": {
     "title": "تحويل",
@@ -383,5 +395,24 @@
     "transformTitle": "تحويل البيانات - محول CSV و Excel",
     "historyTitle": "السجل - محول CSV و Excel",
     "apiTitle": "توثيق API - محول CSV و Excel"
+  },
+  "accessibility": {
+    "skipToMain": "انتقل إلى المحتوى الرئيسي",
+    "loading": "جاري تحميل المحتوى",
+    "menuOpen": "فتح القائمة",
+    "menuClose": "إغلاق القائمة",
+    "themeToggle": "تبديل السمة",
+    "languageSelect": "اختيار اللغة",
+    "newWindow": "يفتح في نافذة جديدة",
+    "required": "حقل مطلوب",
+    "optional": "اختياري",
+    "expandSection": "توسيع القسم",
+    "collapseSection": "طي القسم"
+  },
+  "status": {
+    "parsing": "جاري قراءة الملف...",
+    "converting": "جاري تحويل البيانات...",
+    "conversionComplete": "اكتمل التحويل",
+    "error": "خطأ: {message}"
   }
 }

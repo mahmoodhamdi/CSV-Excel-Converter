@@ -185,9 +185,13 @@ export function FileUpload() {
       <CardContent className="space-y-4">
         {/* File selected indicator */}
         {fileName && (
-          <div className="flex items-center justify-between rounded-lg border bg-muted/50 p-3">
+          <div
+            className="flex items-center justify-between rounded-lg border bg-muted/50 p-3"
+            role="status"
+            aria-live="polite"
+          >
             <div className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-primary" />
+              <FileText className="h-5 w-5 text-primary" aria-hidden="true" />
               <div>
                 <p className="text-sm font-medium">{fileName}</p>
                 {fileSize && (
@@ -195,52 +199,85 @@ export function FileUpload() {
                 )}
               </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={handleClear}>
-              <X className="h-4 w-4" />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleClear}
+              aria-label={t('clearFile')}
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
             </Button>
           </div>
         )}
+
+        {/* Hidden file input - placed outside interactive dropzone for accessibility */}
+        <input
+          id="file-input"
+          type="file"
+          className="sr-only"
+          accept=".csv,.tsv,.json,.xlsx,.xls,.xml"
+          onChange={handleFileSelect}
+          aria-label={t('fileInputLabel')}
+          aria-invalid={!!parseError}
+          aria-errormessage={parseError ? 'file-upload-error' : undefined}
+          tabIndex={-1}
+        />
 
         {/* Dropzone */}
         <div
           className={cn(
             'dropzone cursor-pointer',
             isDragging && 'active',
-            isParsing && 'opacity-50 pointer-events-none'
+            isParsing && 'opacity-50 pointer-events-none',
+            parseError && 'border-destructive'
           )}
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onClick={() => document.getElementById('file-input')?.click()}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              document.getElementById('file-input')?.click();
+            }
+          }}
+          tabIndex={0}
+          role="button"
+          aria-label={t('dropzoneLabel')}
+          aria-describedby="file-upload-hint file-upload-error"
+          aria-busy={isParsing}
           data-testid="upload-dropzone"
         >
-          <input
-            id="file-input"
-            type="file"
-            className="hidden"
-            accept=".csv,.tsv,.json,.xlsx,.xls,.xml"
-            onChange={handleFileSelect}
-          />
           {isParsing ? (
-            <div className="flex items-center justify-center gap-2">
-              <Loader2 className="h-6 w-6 animate-spin" />
+            <div className="flex items-center justify-center gap-2" role="status" aria-live="polite">
+              <Loader2 className="h-6 w-6 animate-spin" aria-hidden="true" />
               <span>{tCommon('processing')}</span>
             </div>
           ) : (
             <>
-              <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
+              <Upload className="mx-auto h-12 w-12 text-muted-foreground" aria-hidden="true" />
               <p className="mt-2">{isDragging ? t('dropzoneActive') : t('dropzone')}</p>
-              <Button variant="secondary" className="mt-4" type="button">
+              <span
+                className="mt-4 inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors bg-secondary text-secondary-foreground hover:bg-secondary/80 h-10 px-4 py-2"
+                aria-hidden="true"
+              >
                 {t('browse')}
-              </Button>
-              <p className="mt-2 text-xs text-muted-foreground">{t('supportedFormats')}</p>
+              </span>
+              <p id="file-upload-hint" className="mt-2 text-xs text-muted-foreground">
+                {t('supportedFormats')}
+              </p>
             </>
           )}
         </div>
 
         {/* Error message */}
         {parseError && (
-          <div className="rounded-lg border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
+          <div
+            id="file-upload-error"
+            className="rounded-lg border border-destructive bg-destructive/10 p-3 text-sm text-destructive"
+            role="alert"
+            aria-live="assertive"
+          >
             {parseError}
           </div>
         )}
@@ -256,14 +293,21 @@ export function FileUpload() {
 
         {/* Paste data */}
         <div className="space-y-2">
-          <p className="text-sm font-medium">{t('paste')}</p>
+          <label htmlFor="paste-data" className="text-sm font-medium">
+            {t('paste')}
+          </label>
           <Textarea
+            id="paste-data"
             placeholder={t('pasteHint')}
             value={pasteData}
             onChange={(e) => setPasteData(e.target.value)}
             rows={4}
+            aria-describedby="paste-hint"
             data-testid="paste-input"
           />
+          <p id="paste-hint" className="sr-only">
+            {t('pasteHint')}
+          </p>
           <Button
             onClick={handlePaste}
             disabled={!pasteData.trim() || isParsing}
@@ -275,27 +319,36 @@ export function FileUpload() {
 
         {/* URL import */}
         <div className="space-y-2">
-          <p className="text-sm font-medium">{t('url')}</p>
+          <label htmlFor="url-input" className="text-sm font-medium">
+            {t('url')}
+          </label>
           <div className="flex gap-2">
             <Input
+              id="url-input"
+              type="url"
               placeholder={t('urlPlaceholder')}
               value={urlInput}
               onChange={(e) => setUrlInput(e.target.value)}
               className="flex-1"
+              aria-describedby="url-hint"
             />
             <Button
               onClick={handleUrlImport}
               disabled={!urlInput.trim() || isLoadingUrl}
               variant="secondary"
+              aria-busy={isLoadingUrl}
             >
               {isLoadingUrl ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
               ) : (
-                <LinkIcon className="h-4 w-4" />
+                <LinkIcon className="h-4 w-4" aria-hidden="true" />
               )}
               <span className="ml-2">{t('urlImport')}</span>
             </Button>
           </div>
+          <p id="url-hint" className="sr-only">
+            {t('urlPlaceholder')}
+          </p>
         </div>
 
         {/* Sample data */}

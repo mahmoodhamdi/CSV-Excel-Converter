@@ -68,6 +68,8 @@
     "title": "Upload Your File",
     "dropzone": "Drag and drop your file here",
     "dropzoneActive": "Drop your file here...",
+    "dropzoneLabel": "File upload area. Press Enter or Space to browse files.",
+    "fileInputLabel": "Choose a file to upload",
     "browse": "Browse Files",
     "paste": "Or paste your data",
     "pasteHint": "Paste CSV, JSON, or tab-separated data",
@@ -80,6 +82,7 @@
     "maxSize": "Maximum file size: {size}MB",
     "fileSelected": "File selected",
     "removeFile": "Remove",
+    "clearFile": "Remove selected file",
     "parseError": "Failed to parse file",
     "invalidFormat": "Invalid file format"
   },
@@ -100,7 +103,16 @@
     "noResults": "No matching results",
     "sortAsc": "Sort ascending",
     "sortDesc": "Sort descending",
-    "clearSort": "Clear sort"
+    "clearSort": "Clear sort",
+    "tableLabel": "Data preview table",
+    "tableCaption": "Data table with {rows} rows and {cols} columns",
+    "sortedAsc": "Sorted ascending",
+    "sortedDesc": "Sorted descending",
+    "clickToSort": "Click to sort",
+    "paginationLabel": "Table pagination",
+    "paginationControls": "Page navigation",
+    "previousPage": "Go to previous page",
+    "nextPage": "Go to next page"
   },
   "convert": {
     "title": "Convert",
@@ -383,5 +395,24 @@
     "transformTitle": "Data Transform - CSV Excel Converter",
     "historyTitle": "History - CSV Excel Converter",
     "apiTitle": "API Documentation - CSV Excel Converter"
+  },
+  "accessibility": {
+    "skipToMain": "Skip to main content",
+    "loading": "Loading content",
+    "menuOpen": "Open menu",
+    "menuClose": "Close menu",
+    "themeToggle": "Toggle theme",
+    "languageSelect": "Select language",
+    "newWindow": "Opens in new window",
+    "required": "Required field",
+    "optional": "Optional",
+    "expandSection": "Expand section",
+    "collapseSection": "Collapse section"
+  },
+  "status": {
+    "parsing": "Parsing file...",
+    "converting": "Converting data...",
+    "conversionComplete": "Conversion complete",
+    "error": "Error: {message}"
   }
 }

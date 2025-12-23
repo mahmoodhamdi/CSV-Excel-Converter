@@ -24,8 +24,13 @@ const TableRow = memo(function TableRow({
 }) {
   return (
     <tr className={rowIndex % 2 === 0 ? 'bg-background' : 'bg-muted/30'}>
-      {headers.map((header) => (
-        <td key={header} className="max-w-xs truncate">
+      {headers.map((header, colIndex) => (
+        <td
+          key={header}
+          className="max-w-xs truncate"
+          role="cell"
+          headers={`col-${colIndex}`}
+        >
           {String(row[header] ?? '')}
         </td>
       ))}
@@ -164,18 +169,45 @@ export function DataPreview() {
 
         {/* Table */}
         <div className="overflow-x-auto rounded-lg border" data-testid="data-preview">
-          <table className="data-table">
+          <table className="data-table" role="grid" aria-label={t('tableLabel')}>
+            <caption className="sr-only">
+              {t('tableCaption', { rows: filteredRows.length, cols: parsedData.headers.length })}
+            </caption>
             <thead>
-              <tr>
-                {parsedData.headers.map((header) => (
+              <tr role="row">
+                {parsedData.headers.map((header, colIndex) => (
                   <th
                     key={header}
+                    id={`col-${colIndex}`}
+                    scope="col"
+                    role="columnheader"
                     className="cursor-pointer select-none whitespace-nowrap"
                     onClick={() => handleSort(header)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleSort(header);
+                      }
+                    }}
+                    tabIndex={0}
+                    aria-sort={
+                      sortColumn === header
+                        ? sortDirection === 'asc'
+                          ? 'ascending'
+                          : 'descending'
+                        : 'none'
+                    }
                   >
                     <div className="flex items-center gap-1">
                       {header}
-                      <ArrowUpDown className="h-3 w-3 opacity-50" />
+                      <ArrowUpDown className="h-3 w-3 opacity-50" aria-hidden="true" />
+                      <span className="sr-only">
+                        {sortColumn === header
+                          ? sortDirection === 'asc'
+                            ? t('sortedAsc')
+                            : t('sortedDesc')
+                          : t('clickToSort')}
+                      </span>
                     </div>
                   </th>
                 ))}
@@ -183,8 +215,8 @@ export function DataPreview() {
             </thead>
             <tbody>
               {paginatedRows.length === 0 ? (
-                <tr>
-                  <td colSpan={parsedData.headers.length} className="text-center py-4">
+                <tr role="row">
+                  <td colSpan={parsedData.headers.length} className="text-center py-4" role="cell">
                     {t('noResults')}
                   </td>
                 </tr>
@@ -204,33 +236,35 @@ export function DataPreview() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
+          <nav aria-label={t('paginationLabel')} className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground" aria-live="polite">
               {t('showing', {
                 from: currentPage * ROWS_PER_PAGE + 1,
                 to: Math.min((currentPage + 1) * ROWS_PER_PAGE, filteredRows.length),
                 total: filteredRows.length,
               })}
             </p>
-            <div className="flex gap-2">
+            <div className="flex gap-2" role="group" aria-label={t('paginationControls')}>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handlePrevPage}
                 disabled={currentPage === 0}
+                aria-label={t('previousPage')}
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-4 w-4" aria-hidden="true" />
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleNextPage}
                 disabled={currentPage === totalPages - 1}
+                aria-label={t('nextPage')}
               >
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-4 w-4" aria-hidden="true" />
               </Button>
             </div>
-          </div>
+          </nav>
         )}
       </CardContent>
     </Card>

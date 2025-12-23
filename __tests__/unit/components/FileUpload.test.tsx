@@ -62,10 +62,11 @@ describe('FileUpload', () => {
     expect(screen.getByText('title')).toBeInTheDocument();
   });
 
-  it('should render browse button', () => {
+  it('should render browse text in dropzone', () => {
     render(<FileUpload />);
 
-    expect(screen.getByRole('button', { name: 'browse' })).toBeInTheDocument();
+    // Browse is a visual element (span styled as button) inside the dropzone for accessibility
+    expect(screen.getByText('browse')).toBeInTheDocument();
   });
 
   it('should render paste textarea', () => {
@@ -165,12 +166,13 @@ describe('FileUpload', () => {
     });
   });
 
-  it('should have hidden file input', () => {
+  it('should have visually hidden file input for accessibility', () => {
     render(<FileUpload />);
 
     const fileInput = document.getElementById('file-input');
     expect(fileInput).toBeInTheDocument();
-    expect(fileInput).toHaveClass('hidden');
+    // File input uses sr-only class for accessibility (screen-reader-only)
+    expect(fileInput).toHaveClass('sr-only');
   });
 
   it('should accept correct file types', () => {

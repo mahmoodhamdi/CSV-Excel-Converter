@@ -10,6 +10,7 @@ import { Footer } from '@/components/layout/Footer';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/layout/ThemeProvider';
 import { ErrorBoundaryWrapper } from '@/components/layout/ErrorBoundaryWrapper';
+import { SkipLink } from '@/components/layout/SkipLink';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -61,8 +62,9 @@ export default async function LocaleLayout({
         >
           <NextIntlClientProvider messages={messages}>
             <div className="flex min-h-screen flex-col">
+              <SkipLink />
               <Header />
-              <main className="flex-1">
+              <main id="main-content" className="flex-1" tabIndex={-1}>
                 <ErrorBoundaryWrapper>{children}</ErrorBoundaryWrapper>
               </main>
               <Footer />
