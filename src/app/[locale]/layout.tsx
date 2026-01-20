@@ -18,6 +18,8 @@ export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
 
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://csv-excel-converter.com';
+
 export async function generateMetadata({
   params,
 }: {
@@ -27,9 +29,60 @@ export async function generateMetadata({
   const messages = await getMessages({ locale });
   const meta = messages.meta as Record<string, string>;
 
+  const title = meta?.homeTitle || 'CSV Excel Converter';
+  const description = meta?.homeDesc || 'Convert CSV, JSON, Excel files online';
+
   return {
-    title: meta?.homeTitle || 'CSV Excel Converter',
-    description: meta?.homeDesc || 'Convert CSV, JSON, Excel files online',
+    title,
+    description,
+    keywords: ['CSV', 'Excel', 'JSON', 'XML', 'converter', 'file converter', 'data conversion', 'XLSX', 'TSV', 'SQL'],
+    authors: [{ name: 'MWM Software Solutions' }],
+    creator: 'MWM Software Solutions',
+    publisher: 'MWM Software Solutions',
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
+    },
+    openGraph: {
+      type: 'website',
+      locale: locale === 'ar' ? 'ar_SA' : 'en_US',
+      url: `${baseUrl}/${locale}`,
+      title,
+      description,
+      siteName: 'CSV Excel Converter',
+      images: [
+        {
+          url: `${baseUrl}/og-image.png`,
+          width: 1200,
+          height: 630,
+          alt: 'CSV Excel Converter - Convert between CSV, JSON, Excel and more',
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [`${baseUrl}/og-image.png`],
+    },
+    alternates: {
+      canonical: `${baseUrl}/${locale}`,
+      languages: {
+        'en': `${baseUrl}/en`,
+        'ar': `${baseUrl}/ar`,
+      },
+    },
+    verification: {
+      // Add your verification codes here
+      // google: 'your-google-verification-code',
+    },
   };
 }
 

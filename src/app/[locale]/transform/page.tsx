@@ -1,28 +1,14 @@
+'use client';
+
 import { useTranslations } from 'next-intl';
-import { setRequestLocale } from 'next-intl/server';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Wand2 } from 'lucide-react';
 
-interface PageProps {
-  params: Promise<{ locale: string }>;
-}
-
-export default async function TransformPage({ params }: PageProps) {
-  const { locale } = await params;
-  setRequestLocale(locale);
-
-  return (
-    <div className="container px-4 py-8">
-      <TransformContent />
-    </div>
-  );
-}
-
-function TransformContent() {
+export default function TransformPage() {
   const t = useTranslations('transform');
 
   return (
-    <div>
+    <div className="container px-4 py-8">
       <h1 className="text-3xl font-bold">{t('title')}</h1>
       <p className="mt-2 text-muted-foreground">{t('subtitle')}</p>
 

@@ -16,7 +16,8 @@ npm run start            # Start production server
 npm run lint             # Run ESLint
 
 # Testing
-npm run test:unit        # Run unit tests (vitest, __tests__/unit/)
+npm run test             # Run all vitest tests (unit, performance, security)
+npm run test:unit        # Run unit tests (vitest, __tests__/unit/, performance/, security/)
 npm run test:integration # Run integration tests (vitest, __tests__/integration/)
 npm run test:e2e         # Run E2E tests (playwright, requires build first)
 npm run test:coverage    # Run tests with coverage report
@@ -79,8 +80,10 @@ REST endpoints for programmatic access:
 
 ## Testing Structure
 
-- `__tests__/unit/` - Unit tests for converter library functions
+- `__tests__/unit/` - Unit tests for converter library, store, and hooks
 - `__tests__/integration/` - API route integration tests
+- `__tests__/performance/` - Performance tests for large file handling
+- `__tests__/security/` - Security tests (input validation, SQL injection)
 - `__tests__/e2e/` - Playwright browser tests
 - E2E tests require production build (`npm run build` before `npm run test:e2e`)
 

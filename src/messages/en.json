@@ -414,5 +414,18 @@
     "converting": "Converting data...",
     "conversionComplete": "Conversion complete",
     "error": "Error: {message}"
+  },
+  "notFound": {
+    "title": "Page Not Found",
+    "description": "The page you're looking for doesn't exist or has been moved.",
+    "goHome": "Go to Home",
+    "goBack": "Go Back"
+  },
+  "errorPage": {
+    "title": "Something went wrong",
+    "description": "An error occurred while loading this page. Please try again.",
+    "tryAgain": "Try Again",
+    "goHome": "Go to Home",
+    "devNote": "Error details are only visible in development mode."
   }
 }

@@ -1,30 +1,16 @@
+'use client';
+
 import { useTranslations } from 'next-intl';
-import { setRequestLocale } from 'next-intl/server';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { History, ArrowRight } from 'lucide-react';
 import { Link } from '@/i18n/routing';
 
-interface PageProps {
-  params: Promise<{ locale: string }>;
-}
-
-export default async function HistoryPage({ params }: PageProps) {
-  const { locale } = await params;
-  setRequestLocale(locale);
-
-  return (
-    <div className="container px-4 py-8">
-      <HistoryContent />
-    </div>
-  );
-}
-
-function HistoryContent() {
+export default function HistoryPage() {
   const t = useTranslations('history');
 
   return (
-    <div>
+    <div className="container px-4 py-8">
       <h1 className="text-3xl font-bold">{t('title')}</h1>
       <p className="mt-2 text-muted-foreground">{t('subtitle')}</p>
 
