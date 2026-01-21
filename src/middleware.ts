@@ -2,7 +2,16 @@ import createMiddleware from 'next-intl/middleware';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { routing } from './i18n/routing';
-import { checkRateLimit, getRateLimitHeaders } from './lib/rate-limit';
+import {
+  checkRateLimit as checkRedisRateLimit,
+  getRateLimitHeaders as getRedisRateLimitHeaders,
+  isRedisConnected,
+  type RateLimitResult,
+} from './lib/rate-limit-redis';
+import {
+  checkRateLimit as checkMemoryRateLimit,
+  getRateLimitHeaders as getMemoryRateLimitHeaders,
+} from './lib/rate-limit';
 
 // Security headers
 const securityHeaders = {
@@ -20,11 +29,16 @@ const cspDirectives = {
   'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
   'img-src': ["'self'", 'data:', 'blob:', 'https:'],
   'font-src': ["'self'", 'https://fonts.gstatic.com'],
-  'connect-src': ["'self'", 'https:'],
+  'connect-src': ["'self'", 'https:', 'wss:'],
   'frame-ancestors': ["'self'"],
   'form-action': ["'self'"],
   'base-uri': ["'self'"],
 };
+
+// Add Sentry tunnel to CSP if configured
+if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
+  cspDirectives['connect-src'].push('https://*.ingest.sentry.io');
+}
 
 function buildCSP(): string {
   return Object.entries(cspDirectives)
@@ -35,8 +49,13 @@ function buildCSP(): string {
 // Create the i18n middleware
 const intlMiddleware = createMiddleware(routing);
 
-export default function middleware(request: NextRequest) {
+export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Skip rate limiting for Sentry monitoring tunnel
+  if (pathname === '/monitoring') {
+    return NextResponse.next();
+  }
 
   // Handle API routes with rate limiting
   if (pathname.startsWith('/api/')) {
@@ -44,8 +63,23 @@ export default function middleware(request: NextRequest) {
     const forwarded = request.headers.get('x-forwarded-for');
     const ip = forwarded ? forwarded.split(',')[0].trim() : 'unknown';
 
-    // Check rate limit
-    const rateLimitResult = checkRateLimit(ip);
+    let rateLimitResult: RateLimitResult;
+    let rateLimitHeaders: Record<string, string>;
+
+    // Try Redis rate limiting first, fall back to memory
+    if (isRedisConnected()) {
+      rateLimitResult = await checkRedisRateLimit(ip);
+      rateLimitHeaders = getRedisRateLimitHeaders(rateLimitResult);
+    } else {
+      const memoryResult = checkMemoryRateLimit(ip);
+      rateLimitResult = {
+        success: memoryResult.success,
+        limit: memoryResult.limit,
+        remaining: memoryResult.remaining,
+        reset: memoryResult.resetTime,
+      };
+      rateLimitHeaders = getMemoryRateLimitHeaders(memoryResult);
+    }
 
     if (!rateLimitResult.success) {
       return new NextResponse(
@@ -58,7 +92,7 @@ export default function middleware(request: NextRequest) {
           status: 429,
           headers: {
             'Content-Type': 'application/json',
-            ...getRateLimitHeaders(rateLimitResult),
+            ...rateLimitHeaders,
             ...securityHeaders,
           },
         }
@@ -69,7 +103,6 @@ export default function middleware(request: NextRequest) {
     const response = NextResponse.next();
 
     // Add rate limit headers
-    const rateLimitHeaders = getRateLimitHeaders(rateLimitResult);
     for (const [key, value] of Object.entries(rateLimitHeaders)) {
       response.headers.set(key, value);
     }

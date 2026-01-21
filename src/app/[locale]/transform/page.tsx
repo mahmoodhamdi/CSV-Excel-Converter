@@ -1,42 +1,37 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Wand2 } from 'lucide-react';
+import {
+  TransformUpload,
+  TransformPipeline,
+  TransformPreview,
+  TransformExport,
+} from '@/components/transform';
 
 export default function TransformPage() {
   const t = useTranslations('transform');
 
   return (
-    <div className="container px-4 py-8">
-      <h1 className="text-3xl font-bold">{t('title')}</h1>
-      <p className="mt-2 text-muted-foreground">{t('subtitle')}</p>
+    <div className="container mx-auto px-4 py-8 max-w-7xl">
+      {/* Header */}
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold mb-2">{t('title')}</h1>
+        <p className="text-muted-foreground">{t('subtitle')}</p>
+      </div>
 
-      <div className="mt-8 grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Wand2 className="h-5 w-5" />
-              {t('columnMapping')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              {t('renameColumn')}
-            </p>
-          </CardContent>
-        </Card>
+      {/* Main Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column - Upload & Pipeline */}
+        <div className="lg:col-span-1 space-y-6">
+          <TransformUpload />
+          <TransformPipeline />
+          <TransformExport />
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('operations')}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <p className="text-sm text-muted-foreground">{t('removeDuplicates')}</p>
-            <p className="text-sm text-muted-foreground">{t('trimWhitespace')}</p>
-            <p className="text-sm text-muted-foreground">{t('filterRows')}</p>
-          </CardContent>
-        </Card>
+        {/* Right Column - Preview */}
+        <div className="lg:col-span-2">
+          <TransformPreview />
+        </div>
       </div>
     </div>
   );
