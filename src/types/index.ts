@@ -38,6 +38,7 @@ export interface SqlOptions {
   tableName?: string;
   includeCreate?: boolean;
   batchSize?: number;
+  dialect?: 'mysql' | 'postgresql' | 'sqlite' | 'mssql';
 }
 
 export interface ParsedData {

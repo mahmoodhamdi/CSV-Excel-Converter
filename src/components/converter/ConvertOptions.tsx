@@ -236,6 +236,25 @@ export function ConvertOptions() {
             </SelectContent>
           </Select>
         </div>
+        <div>
+          <Label htmlFor="dialect">{t('dialect')}</Label>
+          <Select
+            value={sqlOptions.dialect || 'postgresql'}
+            onValueChange={(value) =>
+              setSqlOptions({ dialect: value as 'mysql' | 'postgresql' | 'sqlite' | 'mssql' })
+            }
+          >
+            <SelectTrigger id="dialect">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="postgresql">{t('dialects.postgresql')}</SelectItem>
+              <SelectItem value="mysql">{t('dialects.mysql')}</SelectItem>
+              <SelectItem value="sqlite">{t('dialects.sqlite')}</SelectItem>
+              <SelectItem value="mssql">{t('dialects.mssql')}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
     </div>
   );

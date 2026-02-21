@@ -83,11 +83,11 @@ function ApiDocsContent() {
         <TabsList className="grid w-full grid-cols-2 max-w-md">
           <TabsTrigger value="guide" className="flex items-center gap-2">
             <BookOpen className="h-4 w-4" />
-            Quick Reference
+            {t('quickReference')}
           </TabsTrigger>
           <TabsTrigger value="swagger" className="flex items-center gap-2">
             <FileCode className="h-4 w-4" />
-            Interactive API
+            {t('interactiveApi')}
           </TabsTrigger>
         </TabsList>
 
@@ -205,7 +205,7 @@ console.log(result.data);`)
                   }
                 >
                   <Copy className="mr-2 h-4 w-4" />
-                  Copy
+                  {t('copyCode')}
                 </Button>
               </CardContent>
             </Card>
@@ -259,7 +259,7 @@ print(result['data'])`)
                   }
                 >
                   <Copy className="mr-2 h-4 w-4" />
-                  Copy
+                  {t('copyCode')}
                 </Button>
               </CardContent>
             </Card>

@@ -87,6 +87,7 @@ const initialState = {
     tableName: 'my_table',
     includeCreate: false,
     batchSize: 100,
+    dialect: 'postgresql' as const,
   },
 };
 

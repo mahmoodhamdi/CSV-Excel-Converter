@@ -248,17 +248,17 @@ export function VirtualDataPreview({
           </div>
         </div>
 
-        {/* Row count info */}
+        {/* Filtered row count info */}
         {processedRows.length !== rows.length && (
           <p className="text-sm text-muted-foreground text-center">
-            Showing {processedRows.length} of {rows.length} rows
+            {t('showingFiltered', { shown: processedRows.length, total: rows.length })}
           </p>
         )}
 
         {/* Truncation warning */}
         {data.metadata?.truncated && (
           <p className="text-sm text-amber-600 text-center">
-            Data truncated to {rows.length.toLocaleString()} rows for performance
+            {t('truncated', { count: rows.length.toLocaleString() })}
           </p>
         )}
       </CardContent>

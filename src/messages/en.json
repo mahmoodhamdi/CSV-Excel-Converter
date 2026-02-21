@@ -42,11 +42,13 @@
     "batch": "Batch Convert",
     "transform": "Transform",
     "apiDocs": "API Docs",
-    "history": "History"
+    "history": "History",
+    "admin": "Admin"
   },
   "home": {
     "title": "CSV, JSON & Excel Converter",
     "subtitle": "Convert, transform, and preview your data files instantly",
+    "featuresHeading": "Features",
     "features": {
       "convert": "Convert Anything",
       "convertDesc": "CSV, JSON, Excel, XML, TSV - all formats supported",
@@ -93,6 +95,8 @@
     "colCount": "{count} columns",
     "showAll": "Show all",
     "showing": "Showing {from}-{to} of {total}",
+    "showingFiltered": "Showing {shown} of {total} rows",
+    "truncated": "Data truncated to {count} rows for performance",
     "editMode": "Edit Mode",
     "viewMode": "View Mode",
     "addRow": "Add Row",
@@ -193,7 +197,14 @@
     "tableName": "Table name",
     "tableNamePlaceholder": "my_table",
     "includeCreate": "Include CREATE TABLE",
-    "batchSize": "Batch size"
+    "batchSize": "Batch size",
+    "dialect": "SQL Dialect",
+    "dialects": {
+      "postgresql": "PostgreSQL",
+      "mysql": "MySQL",
+      "sqlite": "SQLite",
+      "mssql": "SQL Server"
+    }
   },
   "transform": {
     "title": "Transform Data",
@@ -357,6 +368,26 @@
     "rows": "rows",
     "columns": "cols"
   },
+  "admin": {
+    "title": "Admin Dashboard",
+    "subtitle": "Monitor API usage and system health",
+    "loginTitle": "Admin Access",
+    "tokenPlaceholder": "Enter admin token",
+    "login": "Login",
+    "unauthorized": "Invalid or missing admin token",
+    "fetchError": "Failed to load dashboard data",
+    "refresh": "Refresh",
+    "totalRequests": "Total API Requests",
+    "successRate": "Success Rate",
+    "totalConversions": "Total Conversions",
+    "uptime": "Uptime",
+    "formatUsage": "Format Usage",
+    "recentActivity": "Recent Activity",
+    "noData": "No conversion data yet",
+    "noActivity": "No recent activity",
+    "failedConversions": "Failed Conversions",
+    "failures": "failures recorded"
+  },
   "apiDocs": {
     "title": "API Documentation",
     "subtitle": "Integrate data conversion into your applications",
@@ -380,6 +411,8 @@
     "copied": "Copied!",
     "rateLimit": "Rate Limit",
     "rateLimitText": "{limit} requests per minute",
+    "quickReference": "Quick Reference",
+    "interactiveApi": "Interactive API",
     "convertEndpoint": {
       "title": "Convert Data",
       "desc": "Convert data from one format to another"
@@ -457,12 +490,61 @@
     "copyright": "© {year} CSV Excel Converter. All rights reserved.",
     "madeWith": "Made with",
     "by": "by",
-    "contact": "Contact",
-    "email": "Email",
-    "phone": "Phone",
+    "links": "Links",
+    "home": "Home",
+    "apiDocs": "API Documentation",
+    "legal": "Legal",
     "privacy": "Privacy Policy",
     "terms": "Terms of Service",
     "github": "GitHub"
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "lastUpdated": "Last updated: February 2026",
+    "dataCollection": {
+      "title": "Data Collection",
+      "content": "We do not collect, store, or transmit any of your uploaded files or converted data. All file processing happens entirely in your browser or temporarily on our server during conversion, and data is immediately discarded after processing."
+    },
+    "dataProcessing": {
+      "title": "Data Processing",
+      "content": "Files uploaded for conversion are processed in real-time and are not stored on our servers. We do not analyze, mine, or retain any content from your files. API requests are processed and responses are returned immediately without data retention."
+    },
+    "cookies": {
+      "title": "Cookies & Local Storage",
+      "content": "We use local storage only to save your preferences (theme, language) and conversion history. No tracking cookies are used. You can clear your local storage at any time through your browser settings."
+    },
+    "thirdParty": {
+      "title": "Third-Party Services",
+      "content": "We may use analytics services to understand usage patterns. These services collect anonymous, aggregated data only. No personal information or file contents are shared with third parties."
+    },
+    "security": {
+      "title": "Security",
+      "content": "We implement industry-standard security measures including input validation, Content Security Policy headers, rate limiting, and protection against common web vulnerabilities (XSS, SQL injection, XXE attacks)."
+    }
+  },
+  "terms": {
+    "title": "Terms of Service",
+    "lastUpdated": "Last updated: February 2026",
+    "usage": {
+      "title": "Acceptable Use",
+      "content": "This service is provided for legitimate data conversion purposes. You agree not to use the service for any illegal activities, to attempt to circumvent rate limits, or to deliberately upload malicious files designed to exploit the system."
+    },
+    "service": {
+      "title": "Service Availability",
+      "content": "We strive to maintain high availability but do not guarantee uninterrupted service. The service is provided on an as-is basis. We reserve the right to modify, suspend, or discontinue the service at any time."
+    },
+    "limitations": {
+      "title": "Limitations",
+      "content": "File uploads are limited to 50MB per file. API usage is rate-limited to 100 requests per minute. Batch conversions are limited to 10 files at a time. These limits may be adjusted without notice."
+    },
+    "intellectual": {
+      "title": "Intellectual Property",
+      "content": "You retain all rights to your data. The service does not claim ownership of any files you upload or convert. The converter software itself is open-source and licensed under the MIT License."
+    },
+    "disclaimer": {
+      "title": "Disclaimer",
+      "content": "The service is provided without warranty of any kind. We are not liable for any data loss, corruption, or damages resulting from the use of this service. Always maintain backups of your original files."
+    }
   },
   "meta": {
     "homeTitle": "CSV Excel Converter - Convert CSV, JSON, Excel Online",

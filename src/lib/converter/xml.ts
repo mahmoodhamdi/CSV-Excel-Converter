@@ -10,6 +10,9 @@
 import { XMLParser, XMLBuilder } from 'fast-xml-parser';
 import type { ParsedData } from '@/types';
 
+/** Maximum recursion depth for XML structure traversal to prevent stack overflow. */
+const MAX_DEPTH = 100;
+
 /**
  * Parses XML data into a structured tabular format.
  *
@@ -42,10 +45,25 @@ import type { ParsedData } from '@/types';
  * ```
  */
 export function parseXml(data: string): ParsedData {
+  // Reject DTD declarations to prevent XXE attacks.
+  // This check must occur before parsing so external entity references
+  // (SYSTEM/PUBLIC) never reach the parser. Standard character references
+  // (&lt;, &amp;, etc.) do not use DOCTYPE or ENTITY declarations and are
+  // therefore safe to process normally.
+  if (data.includes('<!DOCTYPE') || data.includes('<!ENTITY')) {
+    return {
+      headers: [],
+      rows: [],
+      format: 'xml',
+      metadata: { rowCount: 0, columnCount: 0 },
+    };
+  }
+
   const parser = new XMLParser({
     ignoreAttributes: false,
     attributeNamePrefix: '@_',
     textNodeName: '#text',
+    processEntities: true,
   });
 
   try {
@@ -83,17 +101,19 @@ export function parseXml(data: string): ParsedData {
  * Falls back to treating a single object as one row.
  *
  * @param obj - The parsed XML object to extract rows from
+ * @param depth - Current recursion depth (used to prevent infinite recursion)
  * @returns Array of row objects with flattened key-value pairs
  * @internal
  */
-function extractRows(obj: unknown): Record<string, unknown>[] {
+function extractRows(obj: unknown, depth = 0): Record<string, unknown>[] {
+  if (depth > MAX_DEPTH) return [];
   if (!obj || typeof obj !== 'object') return [];
 
   // Handle arrays
   if (Array.isArray(obj)) {
     return obj.map((item) => {
       if (typeof item === 'object' && item !== null) {
-        return flattenXmlObject(item as Record<string, unknown>);
+        return flattenXmlObject(item as Record<string, unknown>, '', depth + 1);
       }
       return { value: item };
     });
@@ -106,19 +126,19 @@ function extractRows(obj: unknown): Record<string, unknown>[] {
     if (Array.isArray(value)) {
       return value.map((item) => {
         if (typeof item === 'object' && item !== null) {
-          return flattenXmlObject(item as Record<string, unknown>);
+          return flattenXmlObject(item as Record<string, unknown>, '', depth + 1);
         }
         return { value: item };
       });
     }
     if (typeof value === 'object' && value !== null) {
-      const nested = extractRows(value);
+      const nested = extractRows(value, depth + 1);
       if (nested.length > 0) return nested;
     }
   }
 
   // Single object, return as single row
-  return [flattenXmlObject(record)];
+  return [flattenXmlObject(record, '', depth + 1)];
 }
 
 /**
@@ -129,14 +149,18 @@ function extractRows(obj: unknown): Record<string, unknown>[] {
  *
  * @param obj - The nested object to flatten
  * @param prefix - Current key prefix for nested properties
+ * @param depth - Current recursion depth (used to prevent infinite recursion)
  * @returns Flattened object with dot-notation keys
  * @internal
  */
 function flattenXmlObject(
   obj: Record<string, unknown>,
-  prefix = ''
+  prefix = '',
+  depth = 0
 ): Record<string, unknown> {
   const result: Record<string, unknown> = {};
+
+  if (depth > MAX_DEPTH) return result;
 
   for (const key in obj) {
     if (!Object.prototype.hasOwnProperty.call(obj, key)) continue;
@@ -149,7 +173,7 @@ function flattenXmlObject(
     } else if (Array.isArray(value)) {
       result[newKey] = value.map((v) => (typeof v === 'object' ? JSON.stringify(v) : v)).join(', ');
     } else if (typeof value === 'object') {
-      Object.assign(result, flattenXmlObject(value as Record<string, unknown>, newKey));
+      Object.assign(result, flattenXmlObject(value as Record<string, unknown>, newKey, depth + 1));
     } else {
       result[newKey] = value;
     }

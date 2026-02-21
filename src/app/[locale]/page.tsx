@@ -85,7 +85,10 @@ export default function HomePage() {
           <FileUpload />
           <FormatSelector />
           <ConvertOptions />
-          <ConvertButton />
+          {/* Hidden on mobile — shown in sticky bar below */}
+          <div className="hidden lg:block">
+            <ConvertButton />
+          </div>
         </div>
         <div className="space-y-6">
           <DataPreview />
@@ -93,9 +96,14 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* Mobile sticky convert bar — visible only below lg breakpoint */}
+      <div className="sticky bottom-0 z-10 bg-background/95 backdrop-blur py-3 lg:hidden">
+        <ConvertButton />
+      </div>
+
       {/* Features Section */}
       <section className="mt-20">
-        <h2 className="text-center text-3xl font-bold">Features</h2>
+        <h2 className="text-center text-3xl font-bold">{t('featuresHeading')}</h2>
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((feature, index) => (
             <Card key={index}>

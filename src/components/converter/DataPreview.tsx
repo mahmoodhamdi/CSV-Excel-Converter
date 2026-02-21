@@ -6,6 +6,7 @@ import { useConverterStore } from '@/stores/converter-store';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { SkeletonTable } from '@/components/ui/skeleton-table';
 import { Table, Search, ChevronLeft, ChevronRight, ArrowUpDown } from 'lucide-react';
 
 const ROWS_PER_PAGE = 10;
@@ -38,7 +39,11 @@ const TableRow = memo(function TableRow({
   );
 });
 
-export function DataPreview() {
+interface DataPreviewProps {
+  loading?: boolean;
+}
+
+export function DataPreview({ loading }: DataPreviewProps) {
   const t = useTranslations('preview');
   const parsedData = useConverterStore((state) => state.parsedData);
   const [searchTerm, setSearchTerm] = useState('');
@@ -121,6 +126,22 @@ export function DataPreview() {
   const handleNextPage = useCallback(() => {
     setCurrentPage((prev) => Math.min(totalPages - 1, prev + 1));
   }, [totalPages]);
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Table className="h-5 w-5" />
+            {t('title')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <SkeletonTable />
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (!parsedData || parsedData.headers.length === 0) {
     return (

@@ -8,6 +8,8 @@ import {
   MAX_FILE_SIZE,
 } from '@/lib/api-utils';
 import { ErrorCodes, ParseError, FileError } from '@/lib/errors';
+import { validateFileSignature } from '@/lib/validation/magic-bytes';
+import { trackConversion } from '@/lib/analytics';
 import type { ConvertOptions, InputFormat, OutputFormat } from '@/types';
 
 export async function POST(request: NextRequest) {
@@ -81,6 +83,17 @@ export async function POST(request: NextRequest) {
 
       if (ext === 'xlsx' || ext === 'xls') {
         inputData = await file.arrayBuffer();
+
+        // Validate file signature for binary formats
+        const validation = validateFileSignature(inputData as ArrayBuffer, ext);
+        if (!validation.valid) {
+          return createErrorResponse(
+            validation.message || 'Invalid file format',
+            ErrorCodes.VALIDATION_ERROR,
+            400,
+            requestId
+          );
+        }
       } else {
         inputData = await file.text();
       }
@@ -132,6 +145,12 @@ export async function POST(request: NextRequest) {
     });
 
     if (!result.success) {
+      trackConversion({
+        endpoint: '/api/convert',
+        inputFormat: parsedData.format,
+        outputFormat,
+        success: false,
+      });
       return createErrorResponse(
         result.error || 'Conversion failed',
         ErrorCodes.CONVERSION_FAILED,
@@ -145,14 +164,29 @@ export async function POST(request: NextRequest) {
       const buffer = await result.data.arrayBuffer();
       const outputFileName = getOutputFilename(fileName, outputFormat);
 
+      trackConversion({
+        endpoint: '/api/convert',
+        inputFormat: parsedData.format,
+        outputFormat,
+        success: true,
+      });
+
       return new NextResponse(buffer, {
         headers: {
           'Content-Type': result.data.type,
-          'Content-Disposition': `attachment; filename="${outputFileName}"`,
+          'Content-Disposition': `attachment; filename="${outputFileName}"; filename*=UTF-8''${encodeURIComponent(outputFileName)}`,
           'X-Request-Id': requestId,
         },
       });
     }
+
+    // Track successful text conversion
+    trackConversion({
+      endpoint: '/api/convert',
+      inputFormat: parsedData.format,
+      outputFormat,
+      success: true,
+    });
 
     // Return JSON response for text formats
     return NextResponse.json({
@@ -163,6 +197,10 @@ export async function POST(request: NextRequest) {
       requestId,
     });
   } catch (error) {
+    trackConversion({
+      endpoint: '/api/convert',
+      success: false,
+    });
     return handleApiError(error, requestId);
   }
 }

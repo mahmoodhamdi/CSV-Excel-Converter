@@ -17,8 +17,17 @@ export function LanguageSwitcher() {
   };
 
   return (
-    <Button variant="ghost" size="icon" onClick={toggleLanguage} aria-label={t('language')}>
-      <Languages className="h-5 w-5" />
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={toggleLanguage}
+      aria-label={t('language')}
+      className="gap-1.5 px-2"
+    >
+      <Languages className="h-4 w-4" />
+      <span className="text-xs font-medium uppercase">
+        {locale === 'en' ? 'AR' : 'EN'}
+      </span>
     </Button>
   );
 }

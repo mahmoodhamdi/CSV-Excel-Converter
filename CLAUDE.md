@@ -16,9 +16,9 @@ npm run start            # Start production server
 npm run lint             # Run ESLint
 
 # Testing
-npm run test             # Run all vitest tests (unit, performance, security)
-npm run test:unit        # Run unit tests (vitest, __tests__/unit/, performance/, security/)
-npm run test:integration # Run integration tests (vitest, __tests__/integration/)
+npm run test             # Run vitest in watch mode (unit, performance, security)
+npm run test:unit        # Run unit tests once (vitest run)
+npm run test:integration # Run integration tests (vitest, separate config)
 npm run test:e2e         # Run E2E tests (playwright, requires build first)
 npm run test:coverage    # Run tests with coverage report
 
@@ -46,6 +46,7 @@ Central conversion engine with format-specific modules:
 - `xml.ts` - XML parsing and writing (fast-xml-parser)
 - `sql.ts` - SQL INSERT statement generation
 - `detect.ts` - Auto-detection of format from content, filename, or MIME type
+- `csv-stream.ts` / `csv-worker-wrapper.ts` - Web Worker support for large CSV files
 - `index.ts` - Main entry points: `parseData()`, `convertData()`, `getOutputFilename()`
 
 ### State Management
@@ -56,6 +57,14 @@ Single Zustand store (`useConverterStore`) manages:
 - Format-specific options (CSV delimiter, JSON indentation, SQL table name, etc.)
 - Conversion state and errors
 
+### Pages (`src/app/[locale]/`)
+
+- `/` - Main converter page
+- `/batch` - Batch file conversion
+- `/transform` - Data transformation (filter, deduplicate, column mapping)
+- `/history` - Conversion history
+- `/api-docs` - Interactive Swagger UI API documentation
+
 ### API Routes (`src/app/api/`)
 
 REST endpoints for programmatic access:
@@ -63,13 +72,20 @@ REST endpoints for programmatic access:
 - `POST /api/parse` - Parse data and return structured result
 - `GET /api/formats` - List supported formats
 - `GET /api/health` - Health check
+- `GET /api/openapi` - OpenAPI 3.0 specification
+
+### Middleware (`src/middleware.ts`)
+
+Handles two concerns:
+- **API routes**: Rate limiting (Redis via Upstash with in-memory fallback) + security headers
+- **Page routes**: `next-intl` locale routing + CSP + security headers
 
 ### Internationalization
 
 - Uses `next-intl` with locale routing (`/en`, `/ar`)
 - Translation files in `src/messages/{en,ar}.json`
 - RTL support for Arabic
-- Config in `src/i18n/`
+- Locale config in `src/i18n/config.ts`, routing navigation helpers in `src/i18n/routing.ts`
 
 ### Key Types (`src/types/index.ts`)
 
@@ -78,15 +94,22 @@ REST endpoints for programmatic access:
 - `ParsedData`: { headers, rows, format, metadata }
 - `ConversionResult`: { success, data, format, error, metadata }
 
+### Environment Variables
+
+All optional. Copy `.env.example` to `.env.local`. Key ones:
+- `NEXT_PUBLIC_BASE_URL` - Base URL for OG/sitemap
+- `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` - Redis rate limiting (falls back to in-memory)
+- `NEXT_PUBLIC_SENTRY_DSN` / `SENTRY_ORG` / `SENTRY_PROJECT` - Sentry error tracking (disabled if unset)
+
 ## Testing Structure
 
 - `__tests__/unit/` - Unit tests for converter library, store, and hooks
-- `__tests__/integration/` - API route integration tests
+- `__tests__/integration/` - API route integration tests (separate vitest config: `vitest.integration.config.ts`)
 - `__tests__/performance/` - Performance tests for large file handling
 - `__tests__/security/` - Security tests (input validation, SQL injection)
-- `__tests__/e2e/` - Playwright browser tests
+- `__tests__/e2e/` - Playwright browser tests (Chromium only, runs against `npm run start`)
 - E2E tests require production build (`npm run build` before `npm run test:e2e`)
 
 ## Path Alias
 
-`@/` maps to `src/` directory (configured in tsconfig.json and vitest configs).
+`@/` maps to `src/` directory (configured in tsconfig.json and both vitest configs).

@@ -20,12 +20,23 @@ const securityHeaders = {
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+  'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload',
+};
+
+// Endpoint cost weights for rate limiting
+const endpointCosts: Record<string, number> = {
+  '/api/convert': 5,
+  '/api/batch': 10,
+  '/api/parse': 3,
+  '/api/formats': 1,
+  '/api/health': 0,
+  '/api/openapi': 1,
 };
 
 // Content Security Policy
-const cspDirectives = {
+const cspDirectives: Record<string, string[]> = {
   'default-src': ["'self'"],
-  'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+  'script-src': ["'self'", "'unsafe-inline'"],
   'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
   'img-src': ["'self'", 'data:', 'blob:', 'https:'],
   'font-src': ["'self'", 'https://fonts.gstatic.com'],
@@ -40,8 +51,13 @@ if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
   cspDirectives['connect-src'].push('https://*.ingest.sentry.io');
 }
 
-function buildCSP(): string {
-  return Object.entries(cspDirectives)
+function buildCSP(pathname: string): string {
+  const directives = { ...cspDirectives };
+  // Swagger UI needs unsafe-eval
+  if (pathname.includes('/api-docs')) {
+    directives['script-src'] = [...cspDirectives['script-src'], "'unsafe-eval'"];
+  }
+  return Object.entries(directives)
     .map(([key, values]) => `${key} ${values.join(' ')}`)
     .join('; ');
 }
@@ -62,6 +78,18 @@ export default async function middleware(request: NextRequest) {
     // Get client identifier (IP address or forwarded IP)
     const forwarded = request.headers.get('x-forwarded-for');
     const ip = forwarded ? forwarded.split(',')[0].trim() : 'unknown';
+
+    // Determine the cost for this endpoint
+    const cost = endpointCosts[pathname] ?? 2;
+
+    // Skip rate limiting entirely for zero-cost endpoints
+    if (cost === 0) {
+      const response = NextResponse.next();
+      for (const [key, value] of Object.entries(securityHeaders)) {
+        response.headers.set(key, value);
+      }
+      return response;
+    }
 
     let rateLimitResult: RateLimitResult;
     let rateLimitHeaders: Record<string, string>;
@@ -124,7 +152,7 @@ export default async function middleware(request: NextRequest) {
   }
 
   // Add CSP header
-  response.headers.set('Content-Security-Policy', buildCSP());
+  response.headers.set('Content-Security-Policy', buildCSP(pathname));
 
   return response;
 }

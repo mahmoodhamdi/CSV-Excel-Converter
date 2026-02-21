@@ -139,9 +139,19 @@ export function getOutputFilename(
   inputFilename: string | undefined,
   outputFormat: OutputFormat
 ): string {
-  const baseName = inputFilename
+  let baseName = inputFilename
     ? inputFilename.replace(/\.[^/.]+$/, '')
     : 'converted';
+
+  // Sanitize: remove path traversal, special chars
+  baseName = baseName
+    .replace(/[/\\]/g, '_')
+    .replace(/\.\./g, '_')
+    .replace(/[<>:"|?*\x00-\x1f]/g, '_')
+    .replace(/^\.+/, '_')
+    .slice(0, 200);
+
+  if (!baseName) baseName = 'converted';
 
   const extensions: Record<OutputFormat, string> = {
     csv: 'csv',

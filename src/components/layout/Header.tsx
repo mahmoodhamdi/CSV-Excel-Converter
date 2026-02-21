@@ -21,6 +21,7 @@ export function Header() {
     { href: '/transform', label: t('transform') },
     { href: '/api-docs', label: t('apiDocs') },
     { href: '/history', label: t('history') },
+    { href: '/admin', label: t('admin') },
   ];
 
   return (

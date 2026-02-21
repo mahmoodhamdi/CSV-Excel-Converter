@@ -14,7 +14,8 @@ import type { SqlOptions } from '@/types';
  *
  * Creates INSERT statements with proper escaping for identifiers and values.
  * Optionally includes CREATE TABLE statement. Supports batch inserts for
- * improved performance with large datasets.
+ * improved performance with large datasets. Dialect-aware quoting is applied
+ * to identifiers and boolean values.
  *
  * @param headers - Array of column header names (used as column identifiers)
  * @param rows - Array of row data objects keyed by header names
@@ -22,6 +23,7 @@ import type { SqlOptions } from '@/types';
  * @param options.tableName - Name of the target table (default: 'my_table')
  * @param options.includeCreate - Include CREATE TABLE statement (default: false)
  * @param options.batchSize - Number of rows per INSERT statement (default: 100)
+ * @param options.dialect - SQL dialect for identifier quoting (default: 'postgresql')
  * @returns SQL string with CREATE TABLE (if requested) and INSERT statements
  *
  * @example
@@ -29,18 +31,8 @@ import type { SqlOptions } from '@/types';
  * const sql = writeSql(
  *   ['name', 'age'],
  *   [{ name: 'John', age: 30 }, { name: 'Jane', age: 25 }],
- *   { tableName: 'users', includeCreate: true }
+ *   { tableName: 'users', includeCreate: true, dialect: 'mysql' }
  * );
- * // Returns:
- * // CREATE TABLE users (
- * //   name TEXT,
- * //   age TEXT
- * // );
- * //
- * // INSERT INTO users (name, age)
- * // VALUES
- * // ('John', 30),
- * // ('Jane', 25);
  * ```
  *
  * @example
@@ -59,32 +51,37 @@ export function writeSql(
     tableName = 'my_table',
     includeCreate = false,
     batchSize = 100,
+    dialect = 'postgresql',
   } = options;
 
   const statements: string[] = [];
 
   // Generate CREATE TABLE statement if requested
   if (includeCreate) {
-    const columns = headers.map((h) => `  ${escapeIdentifier(h)} TEXT`).join(',\n');
-    statements.push(`CREATE TABLE ${escapeIdentifier(tableName)} (\n${columns}\n);`);
+    const columns = headers
+      .map((h) => `  ${escapeIdentifier(h, dialect)} TEXT`)
+      .join(',\n');
+    statements.push(
+      `CREATE TABLE ${escapeIdentifier(tableName, dialect)} (\n${columns}\n);`
+    );
     statements.push('');
   }
 
   // Generate INSERT statements
-  const escapedHeaders = headers.map(escapeIdentifier);
+  const escapedHeaders = headers.map((h) => escapeIdentifier(h, dialect));
   const headerList = escapedHeaders.join(', ');
 
   for (let i = 0; i < rows.length; i += batchSize) {
     const batch = rows.slice(i, i + batchSize);
     const values = batch
       .map((row) => {
-        const vals = headers.map((h) => escapeValue(row[h]));
+        const vals = headers.map((h) => escapeValue(row[h], dialect));
         return `(${vals.join(', ')})`;
       })
       .join(',\n');
 
     statements.push(
-      `INSERT INTO ${escapeIdentifier(tableName)} (${headerList})\nVALUES\n${values};`
+      `INSERT INTO ${escapeIdentifier(tableName, dialect)} (${headerList})\nVALUES\n${values};`
     );
   }
 
@@ -95,18 +92,28 @@ export function writeSql(
  * Escapes a SQL identifier (table name, column name) to prevent injection.
  *
  * Removes special characters and quotes identifiers that start with numbers
- * or are SQL reserved words.
+ * or are SQL reserved words. Quoting style is determined by the dialect:
+ * MySQL uses backticks, MSSQL uses square brackets, and PostgreSQL/SQLite
+ * use double quotes.
  *
  * @param identifier - The identifier to escape
+ * @param dialect - SQL dialect controlling the quote style (default: 'postgresql')
  * @returns Safe SQL identifier string
  * @internal
  */
-function escapeIdentifier(identifier: string): string {
+function escapeIdentifier(identifier: string, dialect: string = 'postgresql'): string {
   // Remove or replace invalid characters
   const cleaned = identifier.replace(/[^a-zA-Z0-9_]/g, '_');
   // Quote if necessary
   if (/^[0-9]/.test(cleaned) || isReservedWord(cleaned)) {
-    return `"${cleaned}"`;
+    switch (dialect) {
+      case 'mysql':
+        return `\`${cleaned}\``;
+      case 'mssql':
+        return `[${cleaned}]`;
+      default: // postgresql, sqlite
+        return `"${cleaned}"`;
+    }
   }
   return cleaned;
 }
@@ -115,13 +122,16 @@ function escapeIdentifier(identifier: string): string {
  * Escapes a value for safe inclusion in SQL statements.
  *
  * Handles NULL, numbers, booleans, and strings with proper quoting.
- * Single quotes in strings are escaped by doubling them.
+ * Single quotes in strings are escaped by doubling them. Boolean
+ * representation is dialect-specific: MSSQL uses 1/0, all others
+ * use TRUE/FALSE.
  *
  * @param value - The value to escape
+ * @param dialect - SQL dialect controlling boolean representation (default: 'postgresql')
  * @returns SQL-safe value string
  * @internal
  */
-function escapeValue(value: unknown): string {
+function escapeValue(value: unknown, dialect: string = 'postgresql'): string {
   if (value === null || value === undefined) {
     return 'NULL';
   }
@@ -131,6 +141,7 @@ function escapeValue(value: unknown): string {
   }
 
   if (typeof value === 'boolean') {
+    if (dialect === 'mssql') return value ? '1' : '0';
     return value ? 'TRUE' : 'FALSE';
   }
 

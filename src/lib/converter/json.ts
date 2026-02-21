@@ -1,6 +1,8 @@
 import type { ParsedData, JsonOptions } from '@/types';
 import { ParseError, ErrorCodes } from '@/lib/errors';
 
+const DANGEROUS_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
 /**
  * Parses JSON data into a structured tabular format with headers and rows.
  *
@@ -190,6 +192,8 @@ export function flattenObject(
 
   for (const key in obj) {
     if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      if (DANGEROUS_KEYS.has(key)) continue;
+
       const newKey = prefix ? `${prefix}.${key}` : key;
       const value = obj[key];
 
@@ -229,6 +233,8 @@ export function unflattenObject(obj: Record<string, unknown>): Record<string, un
   for (const key in obj) {
     if (Object.prototype.hasOwnProperty.call(obj, key)) {
       const keys = key.split('.');
+      if (keys.some(k => DANGEROUS_KEYS.has(k))) continue;
+
       let current = result;
 
       for (let i = 0; i < keys.length - 1; i++) {

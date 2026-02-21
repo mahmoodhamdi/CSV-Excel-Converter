@@ -387,4 +387,45 @@ describe('SQL Generator', () => {
       expect(sql).toMatch(/\('a'\),\n\('b'\)/);
     });
   });
+
+  describe('SQL Dialect Support', () => {
+    const headers = ['id', 'name'];
+    const rows = [{ id: 1, name: 'Test' }];
+
+    it('should use double quotes for PostgreSQL identifiers', () => {
+      const result = writeSql(['select', 'from'], rows, { dialect: 'postgresql' });
+      expect(result).toContain('"select"');
+      expect(result).toContain('"from"');
+    });
+
+    it('should use backticks for MySQL identifiers', () => {
+      const result = writeSql(['select', 'from'], rows, { dialect: 'mysql' });
+      expect(result).toContain('`select`');
+      expect(result).toContain('`from`');
+    });
+
+    it('should use brackets for MSSQL identifiers', () => {
+      const result = writeSql(['select', 'from'], rows, { dialect: 'mssql' });
+      expect(result).toContain('[select]');
+      expect(result).toContain('[from]');
+    });
+
+    it('should use 1/0 for MSSQL booleans', () => {
+      const result = writeSql(['flag'], [{ flag: true }, { flag: false }], { dialect: 'mssql' });
+      expect(result).toContain('1');
+      expect(result).toContain('0');
+      expect(result).not.toContain('TRUE');
+    });
+
+    it('should use TRUE/FALSE for PostgreSQL booleans', () => {
+      const result = writeSql(['flag'], [{ flag: true }, { flag: false }], { dialect: 'postgresql' });
+      expect(result).toContain('TRUE');
+      expect(result).toContain('FALSE');
+    });
+
+    it('should default to postgresql dialect', () => {
+      const result = writeSql(['select'], rows, {});
+      expect(result).toContain('"select"');
+    });
+  });
 });
