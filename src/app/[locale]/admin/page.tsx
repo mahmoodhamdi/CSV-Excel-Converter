@@ -70,7 +70,33 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
-    fetchStats();
+    const controller = new AbortController();
+    fetch('/api/admin/stats', { signal: controller.signal })
+      .then(res => {
+        if (!res.ok) {
+          if (res.status === 401) {
+            setIsAuthenticated(false);
+            setError(t('unauthorized'));
+          }
+          setLoading(false);
+          return null;
+        }
+        return res.json();
+      })
+      .then(data => {
+        if (data && !controller.signal.aborted) {
+          setStats(data.data);
+          setIsAuthenticated(true);
+          setLoading(false);
+        }
+      })
+      .catch(err => {
+        if (!controller.signal.aborted) {
+          setError(err instanceof Error ? err.message : t('fetchError'));
+          setLoading(false);
+        }
+      });
+    return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
