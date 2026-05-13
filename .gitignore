@@ -44,3 +44,13 @@ next-env.d.ts
 /test-results/
 /playwright-report/
 /playwright/.cache/
+
+# API keys (never commit)
+.api-keys.json
+.api-keys.json.tmp
+
+# Sales-prep workspace
+/.sales-prep/
+
+# Local development artifacts
+/marketing/screenshots/.local/
