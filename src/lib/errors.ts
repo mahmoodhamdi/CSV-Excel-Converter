@@ -32,6 +32,11 @@ export const ErrorCodes = {
   MEMORY_EXCEEDED: 'MEMORY_EXCEEDED',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
   NETWORK_ERROR: 'NETWORK_ERROR',
+
+  // Auth errors
+  UNAUTHORIZED: 'UNAUTHORIZED',
+  FORBIDDEN: 'FORBIDDEN',
+  RATE_LIMIT_EXCEEDED: 'RATE_LIMIT_EXCEEDED',
 } as const;
 
 export type ErrorCode = typeof ErrorCodes[keyof typeof ErrorCodes];

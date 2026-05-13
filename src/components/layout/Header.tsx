@@ -19,9 +19,9 @@ export function Header() {
     { href: '/', label: t('home') },
     { href: '/batch', label: t('batch') },
     { href: '/transform', label: t('transform') },
+    { href: '/pricing', label: t('pricing') },
+    { href: '/developers', label: t('developers') },
     { href: '/api-docs', label: t('apiDocs') },
-    { href: '/history', label: t('history') },
-    { href: '/admin', label: t('admin') },
   ];
 
   return (

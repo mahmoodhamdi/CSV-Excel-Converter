@@ -13,6 +13,13 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+
+# Brand selection — passed via --build-arg BRAND=<vertical>
+ARG BRAND=base
+ARG NEXT_PUBLIC_BRAND=base
+ENV BRAND=${BRAND}
+ENV NEXT_PUBLIC_BRAND=${NEXT_PUBLIC_BRAND}
+
 RUN npm run build
 
 # Runner
@@ -34,6 +41,18 @@ EXPOSE 3000
 
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
+
+# Brand baked into the image (matches builder ARG)
+ARG BRAND=base
+ARG NEXT_PUBLIC_BRAND=base
+ENV BRAND=${BRAND}
+ENV NEXT_PUBLIC_BRAND=${NEXT_PUBLIC_BRAND}
+
+LABEL org.opencontainers.image.title="CSV Excel Converter"
+LABEL org.opencontainers.image.description="Privacy-first data converter with REST API"
+LABEL org.opencontainers.image.vendor="MWM Software Solutions"
+LABEL org.opencontainers.image.licenses="MIT"
+LABEL com.mwm.brand="${BRAND}"
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1

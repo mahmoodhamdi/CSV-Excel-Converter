@@ -43,7 +43,9 @@
     "transform": "Transform",
     "apiDocs": "API Docs",
     "history": "History",
-    "admin": "Admin"
+    "admin": "Admin",
+    "pricing": "Pricing",
+    "developers": "Developers"
   },
   "home": {
     "title": "CSV, JSON & Excel Converter",
@@ -585,5 +587,69 @@
     "tryAgain": "Try Again",
     "goHome": "Go to Home",
     "devNote": "Error details are only visible in development mode."
+  },
+  "pricing": {
+    "title": "Pricing",
+    "subtitle": "Pick the plan that fits your team. Self-hosted and managed options available.",
+    "perMonth": "/mo",
+    "perYear": "/yr",
+    "oneTime": "one-time",
+    "perEgp": "EGP",
+    "perSar": "SAR",
+    "perUsd": "USD",
+    "mostPopular": "Most Popular",
+    "ctaContact": "Contact Sales",
+    "ctaStart": "Get Started",
+    "ctaFree": "Use Free",
+    "compareLabel": "Compare with calculator",
+    "calculator": {
+      "title": "Cost Calculator",
+      "subtitle": "Estimate your monthly cost vs. building it yourself",
+      "conversionsLabel": "Conversions per month",
+      "fileSizeLabel": "Average file size (MB)",
+      "usersLabel": "Number of users",
+      "estimatedLabel": "Estimated monthly cost",
+      "diyLabel": "vs. DIY (developer time)",
+      "savingsLabel": "Estimated savings",
+      "savingsHint": "Compared to building and maintaining this in-house",
+      "tcoLabel": "3-year TCO",
+      "recommend": "Recommended plan",
+      "cta": "See full pricing"
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "items": [
+        {
+          "q": "Can I self-host?",
+          "a": "Yes. We publish Docker images for every release. Self-hosting is free for the base tier under MIT license."
+        },
+        {
+          "q": "What payment methods do you accept?",
+          "a": "USD via Stripe, EGP via Fawry/InstaPay, and SAR via STC Pay. Bank transfers available for invoices above $5,000."
+        },
+        {
+          "q": "Is there a refund policy?",
+          "a": "30-day money-back guarantee on one-time licenses. Monthly subscriptions can be canceled any time."
+        },
+        {
+          "q": "Do you offer custom verticals?",
+          "a": "Yes. Enterprise tier includes one custom vertical bundle with brand-specific templates and workflows."
+        }
+      ]
+    }
+  },
+  "developers": {
+    "title": "Developer Portal",
+    "subtitle": "Integrate file conversion into your apps via our REST API and SDKs.",
+    "quickstart": "Quickstart",
+    "auth": "Authentication",
+    "rateLimits": "Rate Limits",
+    "sdks": "SDKs",
+    "viewDocs": "View OpenAPI Docs",
+    "getApiKey": "Get API Key",
+    "tabCurl": "cURL",
+    "tabJs": "JavaScript",
+    "tabTs": "TypeScript",
+    "tabPython": "Python"
   }
 }

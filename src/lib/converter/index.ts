@@ -4,6 +4,14 @@ import { parseExcel, parseExcelData, writeExcel, workbookToBuffer, workbookToBas
 import { parseXml, writeXml } from './xml';
 import { writeSql } from './sql';
 import { detectFormat, detectDelimiter, detectFormatFromFilename, detectFormatFromMimeType } from './detect';
+import {
+  detectEncoding,
+  decodeToUtf8,
+  bytesToString,
+  repairMojibake,
+  type Encoding,
+  type DetectResult as EncodingDetectResult,
+} from './encoding';
 import type {
   InputFormat,
   OutputFormat,
@@ -36,14 +44,26 @@ export {
   detectDelimiter,
   detectFormatFromFilename,
   detectFormatFromMimeType,
+  // Encoding
+  detectEncoding,
+  decodeToUtf8,
+  bytesToString,
+  repairMojibake,
 };
+export type { Encoding, EncodingDetectResult };
 
 export async function parseData(
   data: string | ArrayBuffer,
   format?: InputFormat
 ): Promise<ParsedData> {
-  // Handle binary data (Excel)
+  // Handle binary data: ArrayBuffer is treated as Excel by default,
+  // unless an explicit text format is provided.
   if (data instanceof ArrayBuffer) {
+    if (format && format !== 'xlsx' && format !== 'xls') {
+      // Caller asked for a text format — decode bytes first.
+      const { text } = bytesToString(new Uint8Array(data));
+      return parseData(text, format);
+    }
     return parseExcel(data);
   }
 
@@ -64,6 +84,36 @@ export async function parseData(
     default:
       return parseCsv(data);
   }
+}
+
+/**
+ * Parse raw bytes with auto encoding detection.
+ *
+ * For text formats (CSV/TSV/JSON/XML), detects encoding (Windows-1256, UTF-8 BOM, etc.),
+ * transcodes to a JavaScript UTF-16 string, then parses.
+ *
+ * Returns the encoding info alongside the parsed result so the UI can show
+ * "Decoded from Windows-1256" badges and offer the user a preview.
+ */
+export async function parseDataFromBytes(
+  bytes: Uint8Array,
+  hint?: { format?: InputFormat; fileName?: string }
+): Promise<{ parsedData: ParsedData; encoding: EncodingDetectResult }> {
+  // For Excel formats, skip text decoding entirely.
+  const fileName = hint?.fileName?.toLowerCase() || '';
+  const isExcelExt = fileName.endsWith('.xlsx') || fileName.endsWith('.xls');
+  if (isExcelExt || hint?.format === 'xlsx' || hint?.format === 'xls') {
+    const parsedData = await parseExcel(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer);
+    return {
+      parsedData,
+      encoding: { encoding: 'utf-8', confidence: 1, hasBom: false, bomLength: 0 },
+    };
+  }
+
+  const detection = detectEncoding(bytes);
+  const text = decodeToUtf8(bytes, detection.encoding, detection.bomLength);
+  const parsedData = await parseData(text, hint?.format);
+  return { parsedData, encoding: detection };
 }
 
 export async function convertData(
