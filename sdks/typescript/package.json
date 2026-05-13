@@ -1,0 +1,47 @@
+{
+  "name": "@mwm/csv-converter-sdk",
+  "version": "0.1.0",
+  "description": "Official TypeScript SDK for the CSV Excel Converter API",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "echo 'No tests yet; SDK is thin'"
+  },
+  "keywords": [
+    "csv",
+    "excel",
+    "json",
+    "converter",
+    "data",
+    "transformation",
+    "api-client"
+  ],
+  "author": "MWM Software Solutions <mwm.softwars.solutions@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mahmoodhamdi/CSV-Excel-Converter",
+    "directory": "sdks/typescript"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

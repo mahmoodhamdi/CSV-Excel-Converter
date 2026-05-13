@@ -1,0 +1,171 @@
+{
+  "info": {
+    "name": "CSV Excel Converter API",
+    "description": "REST API for converting between CSV, JSON, Excel (XLSX/XLS), XML, TSV, and SQL formats.\n\nFree tier endpoints under `/api/*` accept anonymous requests.\nCommercial `/api/v2/*` endpoints require an API key (set the `apiKey` collection variable).",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string",
+      "description": "Base URL of your deployment"
+    },
+    {
+      "key": "apiKey",
+      "value": "",
+      "type": "string",
+      "description": "API key for /api/v2/* (format: mwm_...)"
+    }
+  ],
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      { "key": "key", "value": "X-API-Key", "type": "string" },
+      { "key": "value", "value": "{{apiKey}}", "type": "string" }
+    ]
+  },
+  "item": [
+    {
+      "name": "Public — Free Tier",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/health", "host": ["{{baseUrl}}"], "path": ["api", "health"] }
+          }
+        },
+        {
+          "name": "List Formats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/formats", "host": ["{{baseUrl}}"], "path": ["api", "formats"] }
+          }
+        },
+        {
+          "name": "Parse Data",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": \"name,age\\nJohn,30\\nJane,25\",\n  \"inputFormat\": \"csv\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/parse", "host": ["{{baseUrl}}"], "path": ["api", "parse"] }
+          }
+        },
+        {
+          "name": "Convert CSV → JSON",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": \"name,age,city\\nJohn,30,NYC\\nJane,25,LA\",\n  \"inputFormat\": \"csv\",\n  \"outputFormat\": \"json\",\n  \"options\": {\n    \"json\": { \"prettyPrint\": true, \"indent\": 2 }\n  }\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/convert", "host": ["{{baseUrl}}"], "path": ["api", "convert"] }
+          }
+        },
+        {
+          "name": "Convert JSON → CSV",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": \"[{\\\"name\\\":\\\"John\\\",\\\"age\\\":30},{\\\"name\\\":\\\"Jane\\\",\\\"age\\\":25}]\",\n  \"inputFormat\": \"json\",\n  \"outputFormat\": \"csv\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/convert", "host": ["{{baseUrl}}"], "path": ["api", "convert"] }
+          }
+        },
+        {
+          "name": "Convert CSV → SQL (PostgreSQL)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": \"id,name,price\\n1,Widget,9.99\\n2,Gadget,19.99\",\n  \"inputFormat\": \"csv\",\n  \"outputFormat\": \"sql\",\n  \"options\": {\n    \"sql\": {\n      \"tableName\": \"products\",\n      \"dialect\": \"postgresql\",\n      \"includeCreate\": true\n    }\n  }\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/convert", "host": ["{{baseUrl}}"], "path": ["api", "convert"] }
+          }
+        },
+        {
+          "name": "Convert via File Upload",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": [] },
+                { "key": "outputFormat", "value": "json", "type": "text" }
+              ]
+            },
+            "url": { "raw": "{{baseUrl}}/api/convert", "host": ["{{baseUrl}}"], "path": ["api", "convert"] }
+          }
+        },
+        {
+          "name": "OpenAPI Spec",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/openapi", "host": ["{{baseUrl}}"], "path": ["api", "openapi"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Commercial — v2 (API key required)",
+      "item": [
+        {
+          "name": "Key Info",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-API-Key", "value": "{{apiKey}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v2/keys", "host": ["{{baseUrl}}"], "path": ["api", "v2", "keys"] }
+          }
+        },
+        {
+          "name": "Convert (authenticated)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-API-Key", "value": "{{apiKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": \"name,age\\nJohn,30\",\n  \"inputFormat\": \"csv\",\n  \"outputFormat\": \"json\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v2/convert", "host": ["{{baseUrl}}"], "path": ["api", "v2", "convert"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Batch",
+      "item": [
+        {
+          "name": "Batch Convert",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "files", "type": "file", "src": [] },
+                { "key": "files", "type": "file", "src": [] },
+                { "key": "outputFormat", "value": "json", "type": "text" }
+              ]
+            },
+            "url": { "raw": "{{baseUrl}}/api/batch", "host": ["{{baseUrl}}"], "path": ["api", "batch"] }
+          }
+        }
+      ]
+    }
+  ]
+}
